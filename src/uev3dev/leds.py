@@ -1,6 +1,9 @@
 """LED module"""
 
-import errno
+try:
+    import uerrno
+except:
+    import errno as uerrno
 
 from uev3dev import sysfs
 from uev3dev import util
@@ -15,7 +18,7 @@ def _led(name, color):
         led['max'] = sysfs.IntAttribute(path, 'max_brightness', 'r').read()
         return led
     except OSError as e:
-        if e.args[0] == errno.ENOENT:
+        if e.args[0] == uerrno.ENOENT:
             return None
         raise
 

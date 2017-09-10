@@ -1,0 +1,3 @@
+{
+    "ev3devBrowser.download.include": "src/**/*.py"
+}

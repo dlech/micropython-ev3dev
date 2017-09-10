@@ -1,5 +1,10 @@
 """Motors"""
 
+try:
+    import utime
+except:
+    import time as utime
+
 import uev3dev.sysfs as sysfs
 import uev3dev.util as util
 
@@ -38,17 +43,22 @@ class TachoMotor():
         self._max_speed = sysfs.IntAttribute(node, 'max_speed', 'r').read()
         self._position = sysfs.IntAttribute(node, 'position', 'r')
         self._position_sp = sysfs.IntAttribute(node, 'position_sp', 'r+')
+        self._ramp_up_sp = sysfs.IntAttribute(node, 'ramp_up_sp', 'r+')
+        self._ramp_down_sp = sysfs.IntAttribute(node, 'ramp_down_sp', 'r+')
         self._speed_sp = sysfs.IntAttribute(node, 'speed_sp', 'r+')
         self._state = sysfs.Attribute(node, 'state', 'r')
         self._stop_action = sysfs.Attribute(node, 'stop_action', 'r+')
         self._stop_actions = sysfs.Attribute(node, 'stop_actions', 'r').read().split(' ')
         self._time_sp = sysfs.IntAttribute(node, 'time_sp', 'r+')
         self.port = port
-        self.reset()
+        self._command.write('reset')
+        # ramping seems to be broken in the kernel drivers
+        # self._ramp_up_sp.write(100)
+        # self._ramp_down_sp.write(100)
 
     @property
-    def max_speed(self):
-        """Gets the maximum speed of the motor under ideal conditions (no
+    def nominal_speed(self):
+        """Gets the nominal speed of the motor under ideal conditions (no
         load at 9V).
 
         The actual obtainable maximum speed will depend on the load of the
@@ -58,7 +68,7 @@ class TachoMotor():
         """
         return self._count_per_rot * 360 / self._max_speed
 
-    def run_regulated(self, speed):
+    def run(self, speed):
         """Run the motor at the specified speed.
 
         The motor will continue to run at this speed until another command is
@@ -66,8 +76,57 @@ class TachoMotor():
 
         :param int speed: The target speed in degrees/second
         """
-        self._set_speed_sp(int(speed * self._count_per_rot / 360))
+        self._set_speed_sp(speed)
         self._command.write('run-forever')
+
+    def run_for_rotations(self, speed, rotations, stop_action=StopAction.COAST, wait=True):
+        """Run the motor at the target speed for the specified number of
+        rotations.
+
+        The motor will run until the rotations have completed or another
+        command is given.
+
+        :param int speed: The target speed in degrees/second.
+        :param float rotations: The number of rotations to turn the motor.
+        :param StopAction stop_action: The stop action to perform at the end
+            of the time period.
+        :param bool wait: When ``True``, this method will not return until the
+            time has run out. When ``False`` this method will return immediately.
+        """
+        # driver uses absolute value of speed, so we have to invert rotations
+        # to make it work as expected
+        if speed < 0:
+            rotations *= -1
+        self._set_speed_sp(speed)
+        self._set_stop_action(stop_action)
+        self._set_position_sp(rotations)
+        self._command.write('run-to-rel-pos')
+        while wait:
+            state = self._state.read().split(' ')
+            if 'running' not in state or 'holding' in state:
+                wait = False
+
+    def run_for_time(self, speed, time, stop_action=StopAction.COAST, wait=True):
+        """Run the motor at the target speed for a fixed duration.
+
+        The motor will run until the time expires or another command is given.
+
+        :param int speed: The target speed in degrees/second.
+        :param float time: The time for the motor to run in seconds.
+        :param StopAction stop_action: The stop action to perform at the end
+            of the time period.
+        :param bool wait: When ``True``, this method will not return until the
+            time has run out. When ``False`` this method will return immediately.
+        """
+        self._set_speed_sp(speed)
+        self._set_time_sp(int(time * 1000))
+        self._set_stop_action(stop_action)
+        if wait:
+            self._command.write('run-forever')
+            utime.sleep(time)
+            self._command.write('stop')
+        else:
+            self._command.write('run-timed')
 
     def run_unregulated(self, duty_cycle):
         """Run the motor using the specified duty cycle.
@@ -80,27 +139,13 @@ class TachoMotor():
         self._set_duty_cycle_sp(duty_cycle)
         self._command.write('run-direct')
 
-    def run_timed(self, speed, time, stop_action=StopAction.COAST):
-        """Run the motor at the target speed for a fixed duration.
-
-        The motor will run until the time expires or another command is given.
-
-        :param int speed: The target speed in degrees/second.
-        :param float time: The time for the motor to run in seconds.
-        :param StopAction stop_action: The stop action to perform at the end
-            of the time period.
-        """
-        self._set_speed_sp(int(speed * self._count_per_rot / 360))
-        self._set_time_sp(int(time * 1000))
-        self._set_stop_action(stop_action)
-        self._command.write('run-timed')
-
     def stop(self, action=StopAction.COAST):
+        """Stop the motor using the specified stop action
+
+        :param StopAction action: The stop action to perform.
+        """
         self._set_stop_action(action)
         self._command.write('stop')
-
-    def reset(self):
-        self._command.write('reset')
 
     def _set_duty_cycle_sp(self, duty_cycle):
         if duty_cycle < -100 or duty_cycle > 100:
@@ -108,9 +153,16 @@ class TachoMotor():
         self._duty_cycle_sp.write(duty_cycle)
 
     def _set_speed_sp(self, speed):
+        # convert speed from degrees/second to tacho counts per second
+        speed = int(speed * self._count_per_rot / 360)
         if speed < -self._max_speed or speed > self._max_speed:
             raise ValueError('speed is out of range')
         self._speed_sp.write(speed)
+
+    def _set_position_sp(self, rotations):
+        # convert rotations to tacho counts
+        counts = int(self._count_per_rot * rotations)
+        self._position_sp.write(counts)
 
     def _set_time_sp(self, time):
         if time < 0:

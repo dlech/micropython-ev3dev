@@ -159,3 +159,48 @@ class Ev3ColorSensor(Sensor):
         if self._current_mode != self._modes[4]:
             self.set_mode(self._modes[4])
         return self.value(0), self.value(1), self.value(2)
+
+
+class Ev3UltrasonicSensor(Sensor):
+    """Object that represents the LEGO EV3 Ultrasonic Sensor"""
+    def __init__(self, port):
+        """Create a new instance of an ultrasonic sensor.
+
+        :param InputPort port: The input port the sensor is connected to.
+        """
+        super(Ev3UltrasonicSensor, self).__init__(port, 'lego-ev3-us')
+        self._current_mode = self._modes.index(self._mode.read())
+
+    def read_cm(self):
+        """Reads the current distance measured by the sensor in centimeters.
+
+        Also has the effect of setting the LED to red.
+
+        :return float: The distance.
+        """
+        if self._current_mode != self._modes[0]:
+            self.set_mode(self._modes[0])
+        return self.value(0)
+
+    def read_in(self):
+        """Reads the current distance measured by the sensor in inches.
+
+        Also has the effect of setting the LED to red.
+
+        :return float: The distance.
+        """
+        if self._current_mode != self._modes[1]:
+            self.set_mode(self._modes[1])
+        return self.value(0)
+
+    def listen(self):
+        """Reads the current distance measured by the sensor in inches.
+
+        Also has the effect making the LED blink red.
+
+        :return bool: ``True`` if another ultrasonic sensor was detected,
+            otherwise ``False``.
+        """
+        if self._current_mode != self._modes[2]:
+            self.set_mode(self._modes[2])
+        return bool(self.value(0))

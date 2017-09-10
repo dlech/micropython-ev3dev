@@ -1,6 +1,10 @@
 """Internal module for interacting with sysfs"""
 
-import os
+# try:
+#     import uos
+# except:
+import os as uos
+# FIXME: need to enable uos in micropython
 
 
 class Attribute():
@@ -56,13 +60,12 @@ def find_node(subsystem, address, driver):
     :return str: The path to the device or None if a match was not found.
     """
     path = '/sys/class/' + subsystem
-    nodes = os.listdir(path)
-    for n in nodes:
-        n = path + '/' + n
-        addr = Attribute(n, 'address', 'r').read()
+    for node in uos.listdir(path):
+        node = path + '/' + node
+        addr = Attribute(node, 'address', 'r').read()
         if address != addr:
             continue
-        drv = Attribute(n, 'driver_name', 'r').read()
+        drv = Attribute(node, 'driver_name', 'r').read()
         if driver != driver:
             continue
-        return n
+        return node
