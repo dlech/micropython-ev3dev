@@ -1,18 +1,21 @@
 #!/usr/bin/env micropython
 """Sample program using EXPLOR3R"""
 
-# import framebuf
-import os
+import uos
 import utime
 
 from uev3dev import *
 
+# init motors
 left_motor = LargeMotor(OutputPort.B)
 right_motor = LargeMotor(OutputPort.C)
 us_sensor = Ev3UltrasonicSensor(InputPort.N4)
 
-# fbuf = framebuf.FrameBuffer(bytearray((178 + 7) / 8 * 128), 178, 128,
-#                             framebuf.MVLSB, (178 + 7) / 8)
+# init display
+display = Display()
+fbuf, fbuf_data = display.framebuffer()
+
+# do a little song and dance
 
 left_motor.run_for_rotations(400, 1, wait=False)
 right_motor.run_for_rotations(-400, 1)
@@ -20,17 +23,19 @@ right_motor.run_for_rotations(-400, 1)
 right_motor.run_for_rotations(400, 1, wait=False)
 left_motor.run_for_rotations(-400, 1)
 
-os.system('beep -f 100 -n -f 200')
+uos.system('beep -f 100 -n -f 200')
 utime.sleep(2)
 
+# now, a "real" program
 while True:
     dist = us_sensor.read_cm()
-    # fbuf.fill(0)
-    # fbuf.text(dist, 50, 50)
-    if dist > 30:
+    fbuf.fill(1)
+    fbuf.text(str(dist), 50, 50, 0)
+    display.update(fbuf_data)
+    if dist > 50:
         left_motor.run(400)
         right_motor.run(400)
-    elif dist < 15:
+    elif dist < 25:
         left_motor.run(-400)
         right_motor.run(-400)
     else:

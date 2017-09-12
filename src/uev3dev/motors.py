@@ -79,7 +79,7 @@ class TachoMotor():
         self._set_speed_sp(speed)
         self._command.write('run-forever')
 
-    def run_for_rotations(self, speed, rotations, stop_action=StopAction.COAST, wait=True):
+    def run_for_rotations(self, speed, rotations, stop_action=StopAction.HOLD, wait=True):
         """Run the motor at the target speed for the specified number of
         rotations.
 
@@ -106,7 +106,7 @@ class TachoMotor():
             if 'running' not in state or 'holding' in state:
                 wait = False
 
-    def run_for_time(self, speed, time, stop_action=StopAction.COAST, wait=True):
+    def run_for_time(self, speed, time, stop_action=StopAction.HOLD, wait=True):
         """Run the motor at the target speed for a fixed duration.
 
         The motor will run until the time expires or another command is given.
@@ -139,7 +139,7 @@ class TachoMotor():
         self._set_duty_cycle_sp(duty_cycle)
         self._command.write('run-direct')
 
-    def stop(self, action=StopAction.COAST):
+    def stop(self, action=StopAction.HOLD):
         """Stop the motor using the specified stop action
 
         :param StopAction action: The stop action to perform.
