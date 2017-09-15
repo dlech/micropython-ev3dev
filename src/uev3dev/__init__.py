@@ -8,3 +8,6 @@ from uev3dev.motors import *
 from uev3dev.sensors import *
 from uev3dev.buttons import Buttons
 from uev3dev.leds import LED, LEDName, LEDPattern, LEDColor
+from uev3dev.ports import *
+from uev3dev.util import debug_print
+from uev3dev.i2c import SMBus

@@ -8,9 +8,6 @@ except:
 import uev3dev.sysfs as sysfs
 import uev3dev.util as util
 
-OutputPort = util.enum(A='ev3-ports:outA', B='ev3-ports:outB',
-                       C='ev3-ports:outC', D='ev3-ports:outD')
-
 StopAction = util.enum(COAST='coast', BRAKE='brake', HOLD='hold')
 
 
@@ -31,6 +28,8 @@ class TachoMotor():
     """LEGO EV3 Medium Motor"""
 
     def __init__(self, port, driver):
+        if len(port) == 1:
+            port = 'ev3-ports:out' + port
         node = sysfs.find_node('tacho-motor', port, driver)
         if not node:
             raise MotorNotFoundError(self.__class__.__name__, port)
@@ -181,7 +180,7 @@ class LargeMotor(TachoMotor):
     def __init__(self, port):
         """Create a new instace of a large motor.
 
-        :param OutputPort port: The output port the motor is connected to.
+        :param string port: The output port the motor is connected to.
         """
         super(LargeMotor, self).__init__(port, TachoMotor.EV3_LARGE)
 
@@ -192,6 +191,6 @@ class MediumMotor(TachoMotor):
     def __init__(self, port):
         """Create a new instace of a medium motor.
 
-        :param OutputPort port: The output port the motor is connected to.
+        :param string port: The output port the motor is connected to.
         """
         super(MediumMotor, self).__init__(port, TachoMotor.EV3_MEDIUM)

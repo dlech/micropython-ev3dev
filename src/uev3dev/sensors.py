@@ -4,10 +4,6 @@ from uev3dev import sysfs
 from uev3dev import util
 
 
-InputPort = util.enum(N1='ev3-ports:in1', N2='ev3-ports:in2',
-                      N3='ev3-ports:in3', N4='ev3-ports:in4')
-
-
 class SensorNotFoundError(Exception):
     """Exception thrown when a sensor is not found"""
     def __init__(self, name, port):
@@ -19,6 +15,15 @@ class Sensor():
     """Object that represents a sensor."""
 
     def __init__(self, port, driver):
+        """Create a new sensor object.
+
+        :param string port: The port name (``'1'``, ``'2'``, ``'3'`` or
+            ``'4'``).
+        :param string driver: The kernel driver name.
+        """
+        # Handle shorthand port names
+        if len(port) == 1:
+            port = 'ev3-ports:in' + port
         node = sysfs.find_node('lego-sensor', port, driver)
         if not node:
             raise SensorNotFoundError(self.__class__.__name__, port)
@@ -110,7 +115,8 @@ class Ev3ColorSensor(Sensor):
     def __init__(self, port):
         """Create a new instance of a color sensor.
 
-        :param InputPort port: The input port the sensor is connected to.
+        :param string port: The input port the sensor is connected to (``'1'``,
+            ``'2'``, ``'3'`` or ``'4'``).
         """
         super(Ev3ColorSensor, self).__init__(port, 'lego-ev3-color')
         self._current_mode = self._modes.index(self._mode.read())
@@ -166,7 +172,7 @@ class Ev3UltrasonicSensor(Sensor):
     def __init__(self, port):
         """Create a new instance of an ultrasonic sensor.
 
-        :param InputPort port: The input port the sensor is connected to.
+        :param string port: The input port the sensor is connected to.
         """
         super(Ev3UltrasonicSensor, self).__init__(port, 'lego-ev3-us')
         self._current_mode = self._modes.index(self._mode.read())
