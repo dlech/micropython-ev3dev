@@ -13,7 +13,7 @@ FBIOGET_FSCREENINFO = 0x4602
 FB_VISUAL_MONO01 = 0
 FB_VISUAL_MONO10 = 1
 
-FIX_SCREEN_INFO = {
+fb_fix_screeninfo = {
     'id_name': (uctypes.ARRAY | 0, uctypes.UINT8 | 16),
     'smem_start': uctypes.UINT32 | 16,  # long
     'smem_len': uctypes.UINT32 | 20,
@@ -27,10 +27,18 @@ FIX_SCREEN_INFO = {
     'mmio_start': uctypes.UINT32 | 48,  # long
     'mmio_len': uctypes.UINT32 | 52,
     'accel': uctypes.UINT32 | 56,
-    'reserved': (uctypes.ARRAY | 60, uctypes.UINT16 | 3),
+    'capabilities': uctypes.UINT16 | 60,
+    'reserved0': uctypes.UINT16 | 62,
+    'reserved1': uctypes.UINT16 | 64,
 }
 
-VAR_SCREEN_INFO = {
+fb_bitfield = {
+    'offset': uctypes.UINT32 | 0,
+    'length': uctypes.UINT32 | 4,
+    'msb_right': uctypes.UINT32 | 8,
+}
+
+fb_var_screeninfo = {
     'xres': uctypes.UINT32 | 0,
     'yres': uctypes.UINT32 | 4,
     'xres_virtual': uctypes.UINT32 | 8,
@@ -39,26 +47,30 @@ VAR_SCREEN_INFO = {
     'yoffset': uctypes.UINT32 | 20,
     'bits_per_pixel': uctypes.UINT32 | 24,
     'grayscale': uctypes.UINT32 | 28,
-    'red': (32, {
-        'offset': uctypes.UINT32 | 0,
-        'length': uctypes.UINT32 | 4,
-        'msb_right': uctypes.UINT32 | 8,
-    }),
-    'green': (44, {
-        'offset': uctypes.UINT32 | 0,
-        'length': uctypes.UINT32 | 4,
-        'msb_right': uctypes.UINT32 | 8,
-    }),
-    'blue': (56, {
-        'offset': uctypes.UINT32 | 0,
-        'length': uctypes.UINT32 | 4,
-        'msb_right': uctypes.UINT32 | 8,
-    }),
-    'transp': (68, {
-        'offset': uctypes.UINT32 | 0,
-        'length': uctypes.UINT32 | 4,
-        'msb_right': uctypes.UINT32 | 8,
-    }),
+    'red': (32, fb_bitfield),
+    'green': (44, fb_bitfield),
+    'blue': (56, fb_bitfield),
+    'transp': (68, fb_bitfield),
+    'nonstd': uctypes.UINT32 | 80,
+    'activate': uctypes.UINT32 | 84,
+    'height': uctypes.UINT32 | 88,
+    'width': uctypes.UINT32 | 92,
+    'accel_flags': uctypes.UINT32 | 96,
+    'pixclock': uctypes.UINT32 | 100,
+    'left_margin': uctypes.UINT32 | 104,
+    'right_margin': uctypes.UINT32 | 108,
+    'upper_margin': uctypes.UINT32 | 112,
+    'lower_margin': uctypes.UINT32 | 116,
+    'hsync_len': uctypes.UINT32 | 120,
+    'vsync_len': uctypes.UINT32 | 124,
+    'sync': uctypes.UINT32 | 128,
+    'vmode': uctypes.UINT32 | 132,
+    'rotate': uctypes.UINT32 | 136,
+    'colorspace': uctypes.UINT32 | 140,
+    'reserved0': uctypes.UINT32 | 144,
+    'reserved1': uctypes.UINT32 | 148,
+    'reserved2': uctypes.UINT32 | 152,
+    'reserved3': uctypes.UINT32 | 156,
 }
 
 
@@ -67,15 +79,15 @@ class Display():
 
     def __init__(self):
         self._fbdev = open('/dev/fb0', 'w+')
-        self._fix_info_data = bytearray(66)
+        self._fix_info_data = bytearray(uctypes.sizeof(fb_fix_screeninfo))
         fd = self._fbdev.fileno()
         ioctl(fd, FBIOGET_FSCREENINFO, self._fix_info_data, mut=True)
         self._fix_info = uctypes.struct(uctypes.addressof(self._fix_info_data),
-                                        FIX_SCREEN_INFO)
-        self._var_info_data = bytearray(80)
+                                        fb_fix_screeninfo)
+        self._var_info_data = bytearray(uctypes.sizeof(fb_var_screeninfo))
         ioctl(fd, FBIOGET_VSCREENINFO, self._var_info_data, mut=True)
         self._var_info = uctypes.struct(uctypes.addressof(self._var_info_data),
-                                        VAR_SCREEN_INFO)
+                                        fb_var_screeninfo)
         self._fb_data = {}
 
     @property
