@@ -106,7 +106,7 @@ class Sensor():
         return value
 
 
-class Ev3ColorSensor(Sensor):
+class EV3ColorSensor(Sensor):
     """Object that represents a LEGO EV3 Color sensor"""
 
     _COLORS = (None, 'black', 'blue', 'green', 'yellow', 'red', 'white',
@@ -118,7 +118,7 @@ class Ev3ColorSensor(Sensor):
         :param string port: The input port the sensor is connected to (``'1'``,
             ``'2'``, ``'3'`` or ``'4'``).
         """
-        super(Ev3ColorSensor, self).__init__(port, 'lego-ev3-color')
+        super(EV3ColorSensor, self).__init__(port, 'lego-ev3-color')
         self._current_mode = self._modes.index(self._mode.read())
 
     def read_reflected(self):
@@ -167,14 +167,14 @@ class Ev3ColorSensor(Sensor):
         return self.value(0), self.value(1), self.value(2)
 
 
-class Ev3UltrasonicSensor(Sensor):
+class EV3UltrasonicSensor(Sensor):
     """Object that represents the LEGO EV3 Ultrasonic Sensor"""
     def __init__(self, port):
         """Create a new instance of an ultrasonic sensor.
 
         :param string port: The input port the sensor is connected to.
         """
-        super(Ev3UltrasonicSensor, self).__init__(port, 'lego-ev3-us')
+        super(EV3UltrasonicSensor, self).__init__(port, 'lego-ev3-us')
         self._current_mode = self._modes.index(self._mode.read())
 
     def read_cm(self):
