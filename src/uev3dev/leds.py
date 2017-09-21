@@ -92,3 +92,13 @@ class LED():
         if self._blue:
             self._blue['trigger'].write(name)
             self._blue['brightness'].write(_scale(color[2], self._blue['max']))
+
+
+class StatusLight():
+    def __init__(self):
+        self._led0 = LED('led0')
+        self._led1 = LED('led1')
+
+    def off(self):
+        self._led0.pattern(LEDPattern.OFF)
+        self._led1.pattern(LEDPattern.OFF)
