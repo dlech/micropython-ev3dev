@@ -50,22 +50,12 @@ class TachoMotor():
         self._stop_actions = sysfs.Attribute(node, 'stop_actions', 'r').read().split(' ')
         self._time_sp = sysfs.IntAttribute(node, 'time_sp', 'r+')
         self.port = port
+        self.RPM = 100 * self._max_speed / self._count_per_rot / 60
+        self.DPS = self.RPM / 6
         self._command.write('reset')
         # ramping seems to be broken in the kernel drivers
         # self._ramp_up_sp.write(100)
         # self._ramp_down_sp.write(100)
-
-    @property
-    def nominal_speed(self):
-        """Gets the nominal speed of the motor under ideal conditions (no
-        load at 9V).
-
-        The actual obtainable maximum speed will depend on the load of the
-        motor and battery voltage.
-
-        :return int: the speed in degrees/second
-        """
-        return self._count_per_rot * 360 / self._max_speed
 
     def run(self, speed):
         """Run the motor at the specified speed.
@@ -73,22 +63,22 @@ class TachoMotor():
         The motor will continue to run at this speed until another command is
         given.
 
-        :param int speed: The target speed in degrees/second
+        :param int speed: The target speed in percent [-100..100].
         """
         self._set_speed_sp(speed)
         self._command.write('run-forever')
 
-    def run_for_rotations(self, speed, rotations, stop_action=StopAction.HOLD, wait=True):
+    def on_for_rotations(self, speed, rotations, brake=True, wait=True):
         """Run the motor at the target speed for the specified number of
         rotations.
 
         The motor will run until the rotations have completed or another
         command is given.
 
-        :param int speed: The target speed in degrees/second.
+        :param int speed: The target speed in percent [-100..100].
         :param float rotations: The number of rotations to turn the motor.
-        :param StopAction stop_action: The stop action to perform at the end
-            of the time period.
+        :param bool brake: ``True`` cases the motor to hold it's position when
+            when it is reached. ``False`` will let the motor coast to a stop.
         :param bool wait: When ``True``, this method will not return until the
             time has run out. When ``False`` this method will return immediately.
         """
@@ -96,6 +86,10 @@ class TachoMotor():
         # to make it work as expected
         if speed < 0:
             rotations *= -1
+        if brake:
+            stop_action = StopAction.HOLD
+        else:
+            stop_action = StopAction.COAST
         self._set_speed_sp(speed)
         self._set_stop_action(stop_action)
         self._set_position_sp(rotations)
@@ -105,18 +99,25 @@ class TachoMotor():
             if 'running' not in state or 'holding' in state:
                 wait = False
 
-    def run_for_time(self, speed, time, stop_action=StopAction.HOLD, wait=True):
+    def on_for_degrees(self, speed, degrees, brake=True):
+        self.on_for_rotations(speed, degrees / 360, brake)
+
+    def on_for_time(self, speed, time, brake=True, wait=True):
         """Run the motor at the target speed for a fixed duration.
 
         The motor will run until the time expires or another command is given.
 
-        :param int speed: The target speed in degrees/second.
+        :param int speed: The target speed in percent [-100..100].
         :param float time: The time for the motor to run in seconds.
-        :param StopAction stop_action: The stop action to perform at the end
-            of the time period.
+        :param bool brake: ``True`` cases the motor to hold it's position when
+            when it is reached. ``False`` will let the motor coast to a stop.
         :param bool wait: When ``True``, this method will not return until the
             time has run out. When ``False`` this method will return immediately.
         """
+        if brake:
+            stop_action = StopAction.HOLD
+        else:
+            stop_action = StopAction.COAST
         self._set_speed_sp(speed)
         self._set_time_sp(int(time * 1000))
         self._set_stop_action(stop_action)
@@ -138,12 +139,17 @@ class TachoMotor():
         self._set_duty_cycle_sp(duty_cycle)
         self._command.write('run-direct')
 
-    def stop(self, action=StopAction.HOLD):
-        """Stop the motor using the specified stop action
+    def off(self, brake=True):
+        """Stop the motor
 
-        :param StopAction action: The stop action to perform.
+        :param bool brake: ``True`` cases the motor to hold it's position when
+            when it is reached. ``False`` will let the motor coast to a stop.
         """
-        self._set_stop_action(action)
+        if brake:
+            stop_action = StopAction.HOLD
+        else:
+            stop_action = StopAction.COAST
+        self._set_stop_action(stop_action)
         self._command.write('stop')
 
     def _set_duty_cycle_sp(self, duty_cycle):
@@ -152,10 +158,10 @@ class TachoMotor():
         self._duty_cycle_sp.write(duty_cycle)
 
     def _set_speed_sp(self, speed):
-        # convert speed from degrees/second to tacho counts per second
-        speed = int(speed * self._count_per_rot / 360)
-        if speed < -self._max_speed or speed > self._max_speed:
+        # convert speed from % to tacho counts per second
+        if speed < -100 or speed > 100:
             raise ValueError('speed is out of range')
+        speed = int(speed * self._max_speed / 100)
         self._speed_sp.write(speed)
 
     def _set_position_sp(self, rotations):
@@ -194,3 +200,94 @@ class MediumMotor(TachoMotor):
         :param string port: The output port the motor is connected to.
         """
         super(MediumMotor, self).__init__(port, TachoMotor.EV3_MEDIUM)
+
+
+class Steer():
+    def __init__(self, left_port, right_port):
+        self._left_motor = LargeMotor(left_port)
+        self._right_motor = LargeMotor(right_port)
+
+    def on_for_rotations(self, steering, speed, rotations, brake=True):
+        if steering > 100 or steering < -100:
+            raise ValueError('steering is out of range')
+        if speed < 0:
+            speed = abs(speed)
+            rotations *= -1
+        left_speed = speed
+        left_rotations = rotations
+        right_speed = speed
+        right_rotations = rotations
+        steering = (steering + 50) * 2
+        if steering < 0:
+            left_speed = speed * steering / 100
+            left_rotations = rotations * steering / 100
+        elif steering > 0:
+            right_speed = speed * steering / 100
+            right_rotations = rotations * steering / 100
+
+        if brake:
+            stop_action = StopAction.HOLD
+        else:
+            stop_action = StopAction.COAST
+
+        self._left_motor._set_speed_sp(left_speed)
+        self._left_motor._set_position_sp(left_rotations)
+        self._left_motor._set_stop_action(stop_action)
+        self._right_motor._set_speed_sp(right_speed)
+        self._right_motor._set_position_sp(right_rotations)
+        self._right_motor._set_stop_action(stop_action)
+
+        if left_rotations:
+            self._left_motor._command.write('run-to-rel-pos')
+        else:
+            self._left_motor._command.write('stop')
+
+        if right_rotations:
+            self._right_motor._command.write('run-to-rel-pos')
+        else:
+            self._right_motor._command.write('stop')
+
+        while True:
+            state = self._left_motor._state.read().split(' ')
+            if 'running' not in state or 'holding' in state:
+                break
+
+        while True:
+            state = self._right_motor._state.read().split(' ')
+            if 'running' not in state or 'holding' in state:
+                break
+
+    def on_for_degrees(self, steering, speed, degrees, brake=True):
+        self.on_for_rotations(steering, speed, degrees / 360, brake)
+
+
+class Tank():
+    def __init__(self, left_port, right_port):
+        self._steer = Steer(left_port, right_port)
+
+    def on_for_degrees(self, left_speed, right_speed, degrees, brake=True):
+        if left_speed < -100 or left_speed > 100:
+            raise ValueError('left_speed is out of range')
+        if right_speed < -100 or right_speed > 100:
+            raise ValueError('right_speed is out of range')
+
+        # algorithm based on EV3-G tank block
+        if degrees < 0:
+            left_speed *= -1
+            right_speed *= -1
+            degrees = abs(degrees)
+        if abs(left_speed) > abs(right_speed):
+            speed = left_speed
+        else:
+            speed = right_speed
+
+        if speed:
+            turn = 100 / speed * (left_speed - right_speed)
+            turn = min(max(turn, -100), 100)
+        else:
+            turn = 0
+
+        self._steer.on_for_degrees(turn, speed, degrees, brake)
+
+    def on_for_rotations(self, left_speed, right_speed, rotations, brake=True):
+        self.on_for_degrees(left_speed, right_speed, rotations * 360, brake)
