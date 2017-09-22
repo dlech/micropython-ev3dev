@@ -6,39 +6,8 @@ uev3dev package
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: Buttons
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. toctree::
+   :maxdepth: 1
+   :caption: Modules:
 
-.. autoclass:: LED
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: LEDName
-    :members:
-    :undoc-members:
-
-.. autoclass:: LEDPattern
-    :members:
-    :undoc-members:
-
-.. autoclass:: LEDColor
-    :members:
-    :undoc-members:
-
-.. autoclass:: MediumMotor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: LargeMotor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: TachoMotor
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   uev3dev/button

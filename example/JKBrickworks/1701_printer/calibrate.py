@@ -2,6 +2,10 @@
 
 from utime import sleep
 
+from uev3dev.button import State
+from uev3dev.button import CENTER
+from uev3dev.button import DOWN
+from uev3dev.button import UP
 from uev3dev.util import fork
 
 from project import brick
@@ -25,22 +29,20 @@ def calibrate():
             line_width = variables['LineWidth']
             carriage_move(line_width)
             variables['LinePosition'] = line_width
-            if brick['buttons'].compare((brick['buttons'].CENTER,), 'bumped'):
+            if brick['buttons'].test((CENTER,), State.BUMPED):
                 break
         carriage_move(525)
         brick['motor']['C'].on_for_rotations(25, 3)
 
     def thread2():
         while True:
-            brick['buttons'].wait((brick['buttons'].UP,
-                                   brick['buttons'].CENTER,
-                                   brick['buttons'].DOWN), 'pressed')
+            brick['buttons'].wait((UP, CENTER, DOWN), State.PRESSED)
             button = brick['buttons'].read()
-            if button == brick['buttons'].UP:
+            if button == UP:
                 brick['motor']['C'].on_for_degrees(25, 5)
-            elif button == brick['buttons'].DOWN:
+            elif button == DOWN:
                 brick['motor']['C'].on_for_degrees(-25, 5)
-            elif button == brick['buttons'].CENTER:
+            elif button == CENTER:
                 # This is not in the EV3-G program, but is needed in order for
                 # the program to exit, otherwise this thread keeps running.
                 raise SystemExit

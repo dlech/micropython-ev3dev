@@ -1,6 +1,6 @@
 """Common project information"""
 
-from uev3dev.buttons import Buttons
+from uev3dev.button import Buttons
 from uev3dev.leds import StatusLight
 from uev3dev.motors import LargeMotor
 from uev3dev.motors import MediumMotor
