@@ -68,39 +68,58 @@ class TachoMotor():
         self._set_speed_sp(speed)
         self._command.write('run-forever')
 
-    def on_for_rotations(self, speed, rotations, brake=True, wait=True):
+    def on_for_degrees(self, speed, degrees, brake=True, wait=True):
         """Run the motor at the target speed for the specified number of
-        rotations.
+        degrees.
 
-        The motor will run until the rotations have completed or another
-        command is given.
+        The motor will run until the new position is reached or another command
+        is given.
 
-        :param int speed: The target speed in percent [-100..100].
-        :param float rotations: The number of rotations to turn the motor.
-        :param bool brake: ``True`` cases the motor to hold it's position when
-            when it is reached. ``False`` will let the motor coast to a stop.
-        :param bool wait: When ``True``, this method will not return until the
-            time has run out. When ``False`` this method will return immediately.
+        Parameters:
+            speed (int): The target speed in percent [-100..100].
+            degrees (int): The number of degrees to turn the motor.
+            brake (bool): ``True`` cases the motor to hold it's position when
+                          when it is reached. ``False`` will let the motor
+                          coast to a stop.
+            wait (bool): When ``True``, this method will not return until the
+                         time has run out. When ``False`` this method will
+                         return immediately.
         """
-        # driver uses absolute value of speed, so we have to invert rotations
+        # driver uses absolute value of speed, so we have to invert degrees
         # to make it work as expected
         if speed < 0:
-            rotations *= -1
+            degrees *= -1
         if brake:
             stop_action = StopAction.HOLD
         else:
             stop_action = StopAction.COAST
         self._set_speed_sp(speed)
         self._set_stop_action(stop_action)
-        self._set_position_sp(rotations)
+        self._set_position_sp(degrees)
         self._command.write('run-to-rel-pos')
         while wait:
             state = self._state.read().split(' ')
             if 'running' not in state or 'holding' in state:
                 wait = False
 
-    def on_for_degrees(self, speed, degrees, brake=True):
-        self.on_for_rotations(speed, degrees / 360, brake)
+    def on_for_rotations(self, speed, rotations, brake=True, wait=True):
+        """Run the motor at the target speed for the specified number of
+        rotations.
+
+        The motor will run until the new position is reached or another command
+        is given.
+
+        Parameters:
+            speed (int): The target speed in percent [-100..100].
+            rotations (float): The number of rotations to turn the motor.
+            brake (bool): ``True`` cases the motor to hold it's position when
+                          when it is reached. ``False`` will let the motor
+                          coast to a stop.
+            wait (bool): When ``True``, this method will not return until the
+                         time has run out. When ``False`` this method will
+                         return immediately.
+        """
+        self.on_for_degrees(speed, rotations * 360, brake, wait)
 
     def on_for_time(self, speed, time, brake=True, wait=True):
         """Run the motor at the target speed for a fixed duration.
@@ -164,9 +183,9 @@ class TachoMotor():
         speed = int(speed * self._max_speed / 100)
         self._speed_sp.write(speed)
 
-    def _set_position_sp(self, rotations):
+    def _set_position_sp(self, degrees):
         # convert rotations to tacho counts
-        counts = int(self._count_per_rot * rotations)
+        counts = int(self._count_per_rot * degrees / 360)
         self._position_sp.write(counts)
 
     def _set_time_sp(self, time):
@@ -207,23 +226,22 @@ class Steer():
         self._left_motor = LargeMotor(left_port)
         self._right_motor = LargeMotor(right_port)
 
-    def on_for_rotations(self, steering, speed, rotations, brake=True):
+    def on_for_degrees(self, steering, speed, degrees, brake=True):
         if steering > 100 or steering < -100:
             raise ValueError('steering is out of range')
         if speed < 0:
             speed = abs(speed)
-            rotations *= -1
-        left_speed = speed
-        left_rotations = rotations
-        right_speed = speed
-        right_rotations = rotations
-        steering = (steering + 50) * 2
+            degrees *= -1
+        left_speed = right_speed = speed
+        left_degrees = right_degrees = int(degrees)
         if steering < 0:
+            steering = (50 + steering) * 2
             left_speed = speed * steering / 100
-            left_rotations = rotations * steering / 100
+            left_degrees = degrees * steering / 100
         elif steering > 0:
+            steering = (50 - steering) * 2
             right_speed = speed * steering / 100
-            right_rotations = rotations * steering / 100
+            right_degrees = degrees * steering / 100
 
         if brake:
             stop_action = StopAction.HOLD
@@ -231,18 +249,18 @@ class Steer():
             stop_action = StopAction.COAST
 
         self._left_motor._set_speed_sp(left_speed)
-        self._left_motor._set_position_sp(left_rotations)
+        self._left_motor._set_position_sp(left_degrees)
         self._left_motor._set_stop_action(stop_action)
         self._right_motor._set_speed_sp(right_speed)
-        self._right_motor._set_position_sp(right_rotations)
+        self._right_motor._set_position_sp(right_degrees)
         self._right_motor._set_stop_action(stop_action)
 
-        if left_rotations:
+        if left_degrees:
             self._left_motor._command.write('run-to-rel-pos')
         else:
             self._left_motor._command.write('stop')
 
-        if right_rotations:
+        if right_degrees:
             self._right_motor._command.write('run-to-rel-pos')
         else:
             self._right_motor._command.write('stop')
@@ -257,8 +275,8 @@ class Steer():
             if 'running' not in state or 'holding' in state:
                 break
 
-    def on_for_degrees(self, steering, speed, degrees, brake=True):
-        self.on_for_rotations(steering, speed, degrees / 360, brake)
+    def on_for_rotations(self, steering, speed, rotations, brake=True):
+        self.on_for_degrees(steering, speed, rotations * 360, brake)
 
 
 class Tank():
@@ -282,8 +300,7 @@ class Tank():
             speed = right_speed
 
         if speed:
-            turn = 100 / speed * (left_speed - right_speed)
-            turn = min(max(turn, -100), 100)
+            turn = 50 * (left_speed - right_speed) / speed
         else:
             turn = 0
 
