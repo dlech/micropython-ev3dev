@@ -1,11 +1,11 @@
 """Common project information"""
 
-from uev3dev import Buttons
-from uev3dev import StatusLight
-from uev3dev import LargeMotor
-from uev3dev import MediumMotor
-from uev3dev import Tank
-from uev3dev import EV3ColorSensor
+from uev3dev.buttons import Buttons
+from uev3dev.leds import StatusLight
+from uev3dev.motors import LargeMotor
+from uev3dev.motors import MediumMotor
+from uev3dev.motors import Tank
+from uev3dev.sensors import EV3ColorSensor
 
 brick = {
     'motor': {

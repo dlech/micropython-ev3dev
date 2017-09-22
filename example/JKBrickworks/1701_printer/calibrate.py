@@ -2,7 +2,7 @@
 
 from utime import sleep
 
-from uev3dev import fork
+from uev3dev.util import fork
 
 from project import brick
 from project import variables
