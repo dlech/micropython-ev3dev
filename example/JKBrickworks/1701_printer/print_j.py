@@ -5,7 +5,7 @@ from uev3dev import fork
 from project import brick
 from project import variables
 
-# myblocks
+# My Blocks
 from lower_pen import lower_pen
 from lift_pen import lift_pen
 

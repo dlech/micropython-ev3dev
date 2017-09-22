@@ -7,7 +7,7 @@ from uev3dev import fork
 from project import brick
 from project import variables
 
-# myblocks
+# My Blocks
 from initialize import initialize
 from carriage_move import carriage_move
 

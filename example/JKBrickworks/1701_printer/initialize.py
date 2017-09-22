@@ -3,7 +3,7 @@
 from project import brick
 from project import variables
 
-# myblocks
+# My Blocks
 from text_size import text_size
 
 

@@ -2,7 +2,7 @@
 from project import brick
 from project import variables
 
-# myblocks
+# My Blocks
 from print_letter import print_letter
 
 

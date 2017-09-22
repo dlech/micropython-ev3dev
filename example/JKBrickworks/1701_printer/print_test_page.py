@@ -8,7 +8,7 @@ from uev3dev import fork
 from project import brick
 from project import variables
 
-# my blocks
+# My Blocks
 from carriage_move import carriage_move
 from feed_in import feed_in
 from feed_out import feed_out

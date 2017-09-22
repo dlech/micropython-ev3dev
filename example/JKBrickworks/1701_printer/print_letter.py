@@ -2,7 +2,7 @@
 from project import brick
 from project import variables
 
-# myblocks
+# My Blocks
 from print_a import print_a
 from print_b import print_b
 from print_c import print_c
