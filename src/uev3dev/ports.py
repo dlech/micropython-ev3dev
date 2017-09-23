@@ -2,6 +2,7 @@
 
 from uev3dev._sysfs import find_node
 from uev3dev._sysfs import Attribute
+from uev3dev._sysfs import ListAttribute
 
 
 class PortNotFoundError(Exception):
@@ -25,7 +26,7 @@ class Port():
         if not node:
             raise PortNotFoundError(self.__class__.__name__, port)
         self._mode = Attribute(node, 'mode', 'r+')
-        self._modes = Attribute(node, 'modes', 'r').read().split(' ')
+        self._modes = ListAttribute(node, 'modes', 'r').read()
         self._set_device = Attribute(node, 'set_device', 'w')
         self._status = Attribute(node, 'status', 'r')
 

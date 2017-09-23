@@ -48,6 +48,25 @@ class IntAttribute(Attribute):
         super(IntAttribute, self).write(str(value))
 
 
+class ListAttribute(Attribute):
+    """A sysfs attribute that has a space-separated list of values"""
+    def __init__(self, path, attr, mode):
+        super(ListAttribute, self).__init__(path, attr, mode)
+
+    def read(self):
+        """Reads the attribute value
+
+        Returns:
+            A list of strings
+        """
+        return super(ListAttribute, self).read().split(' ')
+
+    def write(self, value):
+        """Raises ``RuntimeError``
+        """
+        raise RuntimeError('Writing to ListAttribute is not supported')
+
+
 def find_node(subsystem, address, driver):
     """Find a sysfs device node.
 

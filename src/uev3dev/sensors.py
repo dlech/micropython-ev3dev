@@ -3,6 +3,7 @@
 from uev3dev._sysfs import find_node
 from uev3dev._sysfs import Attribute
 from uev3dev._sysfs import IntAttribute
+from uev3dev._sysfs import ListAttribute
 from uev3dev import util
 
 
@@ -32,14 +33,14 @@ class Sensor():
 
         try:
             self._command = Attribute(node, 'command', 'w')
-            self._commands = Attribute(node, 'commands', 'r').read().split(' ')
+            self._commands = ListAttribute(node, 'commands', 'r').read()
         except OSError:
             # some sensors do no support commands
             pass
 
         self._decimals = IntAttribute(node, 'decimals', 'r')
         self._mode = Attribute(node, 'mode', 'r+')
-        self._modes = Attribute(node, 'modes', 'r').read().split(' ')
+        self._modes = ListAttribute(node, 'modes', 'r').read()
         self._num_values = IntAttribute(node, 'num_values', 'r')
         self._units = Attribute(node, 'units', 'r')
         self._value = (IntAttribute(node, 'value0', 'r'),
