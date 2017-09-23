@@ -6,7 +6,7 @@ except:
     import errno as uerrno
 
 from uev3dev._sysfs import IntAttribute
-from uev3dev import util
+from uev3dev.util import _enum
 
 
 def _led(name, color):
@@ -29,14 +29,14 @@ class LEDNotFoundError(Exception):
         super(LEDNotFoundError, self).__init__(message)
 
 
-LEDPattern = util.enum(OFF='none', ON='default-on', FLASH='heartbeat')
+LEDPattern = _enum(OFF='none', ON='default-on', FLASH='heartbeat')
 """LED blink patterns"""
 
-LEDName = util.enum(LED0='led0', LED1='led1')
+LEDName = _enum(LED0='led0', LED1='led1')
 """Common LED names"""
 
 
-LEDColor = util.enum(
+LEDColor = _enum(
     RED=(255, 0, 0),
     GREEN=(0, 255, 0),
     BLUE=(0, 0, 255),

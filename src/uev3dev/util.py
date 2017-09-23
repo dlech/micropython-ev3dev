@@ -1,10 +1,10 @@
-"""Internal utility module"""
+"""Utility module"""
 
 import sys
 import _thread
 
 
-def enum(**enums):
+def _enum(**enums):
     """Create a new type that is used as an enum
 
     :param enums: keyword arguments giving the enum members and values
@@ -14,9 +14,15 @@ def enum(**enums):
     return type('Enum', (), enums)
 
 
-def debug_print(*args, **kwargs):
-    """Print on stderr for debugging"""
-    print(*args, **kwargs, file=sys.stderr)
+def debug_print(*args, sep=' ', end='\n'):
+    """Print on stderr for debugging
+
+    Parameters:
+        args: One or more arguments to print
+        sep (str): Separator inserted between arguments
+        end (str): Appended after the last argument
+    """
+    print(*args, sep=sep, end=end, file=sys.stderr)
 
 
 def _thread_runner(lock, function):

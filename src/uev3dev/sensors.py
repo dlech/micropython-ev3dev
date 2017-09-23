@@ -4,7 +4,6 @@ from uev3dev._sysfs import find_node
 from uev3dev._sysfs import Attribute
 from uev3dev._sysfs import IntAttribute
 from uev3dev._sysfs import ListAttribute
-from uev3dev import util
 
 
 class SensorNotFoundError(Exception):
