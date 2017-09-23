@@ -11,3 +11,4 @@ uev3dev package
    :caption: Modules:
 
    uev3dev/button
+   uev3dev/motor

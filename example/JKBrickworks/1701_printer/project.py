@@ -2,9 +2,9 @@
 
 from uev3dev.button import Buttons
 from uev3dev.leds import StatusLight
-from uev3dev.motors import LargeMotor
-from uev3dev.motors import MediumMotor
-from uev3dev.motors import Tank
+from uev3dev.motor import LargeMotor
+from uev3dev.motor import MediumMotor
+from uev3dev.motor import Tank
 from uev3dev.sensors import EV3ColorSensor
 
 brick = {

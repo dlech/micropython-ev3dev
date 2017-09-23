@@ -58,5 +58,5 @@ while True:
     display.update(fbuf_data)
 
     speed = n and ((x1 + x2 // 2) - 128) // 4
-    left_motor.run_unregulated(-speed)
-    right_motor.run_unregulated(speed)
+    left_motor.on_unregulated(-speed)
+    right_motor.on_unregulated(speed)

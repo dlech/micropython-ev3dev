@@ -1,14 +1,9 @@
 """Motors"""
 
-try:
-    import utime
-except:
-    import time as utime
+import utime
 
 import uev3dev.sysfs as sysfs
 import uev3dev.util as util
-
-StopAction = util.enum(COAST='coast', BRAKE='brake', HOLD='hold')
 
 
 class MotorNotFoundError(Exception):
@@ -18,14 +13,16 @@ class MotorNotFoundError(Exception):
         super(MotorNotFoundError, self).__init__(msg)
 
 
-class TachoMotor():
-    """Object that represents a motor with position feedback."""
+class Motor():
+    """Object that represents a motor with position feedback.
 
-    EV3_LARGE = 'lego-ev3-l-motor'
-    """LEGO EV3 Large Motor"""
+    Use :py:class:`LargeMotor` or :py:class:`MediumMotor` to create a new
+    motor instance rather than using this class directly.
+    """
 
-    EV3_MEDIUM = 'lego-ev3-m-motor'
-    """LEGO EV3 Medium Motor"""
+    _EV3_LARGE = 'lego-ev3-l-motor'
+
+    _EV3_MEDIUM = 'lego-ev3-m-motor'
 
     def __init__(self, port, driver):
         if len(port) == 1:
@@ -57,18 +54,19 @@ class TachoMotor():
         # self._ramp_up_sp.write(100)
         # self._ramp_down_sp.write(100)
 
-    def run(self, speed):
+    def on(self, speed):
         """Run the motor at the specified speed.
 
         The motor will continue to run at this speed until another command is
         given.
 
-        :param int speed: The target speed in percent [-100..100].
+        Parameters:
+            speed (int): The target speed in percent [-100..100].
         """
         self._set_speed_sp(speed)
         self._command.write('run-forever')
 
-    def on_for_degrees(self, speed, degrees, brake=True, wait=True):
+    def on_for_degrees(self, speed, degrees, brake=True):
         """Run the motor at the target speed for the specified number of
         degrees.
 
@@ -81,28 +79,21 @@ class TachoMotor():
             brake (bool): ``True`` cases the motor to hold it's position when
                           when it is reached. ``False`` will let the motor
                           coast to a stop.
-            wait (bool): When ``True``, this method will not return until the
-                         time has run out. When ``False`` this method will
-                         return immediately.
         """
         # driver uses absolute value of speed, so we have to invert degrees
         # to make it work as expected
         if speed < 0:
             degrees *= -1
-        if brake:
-            stop_action = StopAction.HOLD
-        else:
-            stop_action = StopAction.COAST
         self._set_speed_sp(speed)
-        self._set_stop_action(stop_action)
+        self._set_stop_action(brake and 'hold' or 'coast')
         self._set_position_sp(degrees)
         self._command.write('run-to-rel-pos')
-        while wait:
+        while True:
             state = self._state.read().split(' ')
             if 'running' not in state or 'holding' in state:
-                wait = False
+                break
 
-    def on_for_rotations(self, speed, rotations, brake=True, wait=True):
+    def on_for_rotations(self, speed, rotations, brake=True):
         """Run the motor at the target speed for the specified number of
         rotations.
 
@@ -112,48 +103,38 @@ class TachoMotor():
         Parameters:
             speed (int): The target speed in percent [-100..100].
             rotations (float): The number of rotations to turn the motor.
-            brake (bool): ``True`` cases the motor to hold it's position when
-                          when it is reached. ``False`` will let the motor
-                          coast to a stop.
-            wait (bool): When ``True``, this method will not return until the
-                         time has run out. When ``False`` this method will
-                         return immediately.
+            brake (bool): ``True`` causes the motor to hold it's position when
+                when it is reached. ``False`` will let the motor coast to a
+                stop.
         """
-        self.on_for_degrees(speed, rotations * 360, brake, wait)
+        self.on_for_degrees(speed, rotations * 360, brake)
 
-    def on_for_time(self, speed, time, brake=True, wait=True):
+    def on_for_time(self, speed, time, brake=True):
         """Run the motor at the target speed for a fixed duration.
 
         The motor will run until the time expires or another command is given.
 
-        :param int speed: The target speed in percent [-100..100].
-        :param float time: The time for the motor to run in seconds.
-        :param bool brake: ``True`` cases the motor to hold it's position when
-            when it is reached. ``False`` will let the motor coast to a stop.
-        :param bool wait: When ``True``, this method will not return until the
-            time has run out. When ``False`` this method will return immediately.
+        Parameters:
+            speed (int): The target speed in percent [-100..100].
+            time (float): The time for the motor to run in seconds.
+            brake (bool): ``True`` causes the motor to hold it's position when
+                when it is reached. ``False`` will let the motor coast to a
+                stop.
         """
-        if brake:
-            stop_action = StopAction.HOLD
-        else:
-            stop_action = StopAction.COAST
         self._set_speed_sp(speed)
         self._set_time_sp(int(time * 1000))
-        self._set_stop_action(stop_action)
-        if wait:
-            self._command.write('run-forever')
-            utime.sleep(time)
-            self._command.write('stop')
-        else:
-            self._command.write('run-timed')
+        self._set_stop_action(brake and 'hold' or 'coast')
+        self._command.write('run-timed')
+        utime.sleep(time)
 
-    def run_unregulated(self, duty_cycle):
+    def on_unregulated(self, duty_cycle):
         """Run the motor using the specified duty cycle.
 
         The motor will continue to run with this duty cycle another command is
         given.
 
-        :param int duty_cycle: the duty cycle, -100 to 100 percent
+        Parameters:
+            duty_cycle (int): the duty cycle, -100 to 100 percent
         """
         self._set_duty_cycle_sp(duty_cycle)
         self._command.write('run-direct')
@@ -161,14 +142,12 @@ class TachoMotor():
     def off(self, brake=True):
         """Stop the motor
 
-        :param bool brake: ``True`` cases the motor to hold it's position when
-            when it is reached. ``False`` will let the motor coast to a stop.
+        Parameters:
+            brake (bool): ``True`` cases the motor to hold it's position when
+                when it is reached. ``False`` will let the motor coast to a
+                stop.
         """
-        if brake:
-            stop_action = StopAction.HOLD
-        else:
-            stop_action = StopAction.COAST
-        self._set_stop_action(stop_action)
+        self._set_stop_action(brake and 'hold' or 'coast')
         self._command.write('stop')
 
     def _set_duty_cycle_sp(self, duty_cycle):
@@ -199,34 +178,63 @@ class TachoMotor():
         self._stop_action.write(action)
 
 
-class LargeMotor(TachoMotor):
-    """Object that represents a LEGO EV3 Large motor."""
+class LargeMotor(Motor):
+    """Object that represents a LEGO EV3 Large motor.
+
+    Parameters:
+        port (str): The output port the motor is connected to, ``A``, ``B``,
+            ``C`` or ``D``.
+    """
 
     def __init__(self, port):
         """Create a new instace of a large motor.
-
-        :param string port: The output port the motor is connected to.
         """
-        super(LargeMotor, self).__init__(port, TachoMotor.EV3_LARGE)
+        super(LargeMotor, self).__init__(port, Motor._EV3_LARGE)
 
 
-class MediumMotor(TachoMotor):
-    """Object that represents a LEGO EV3 Medium motor."""
+class MediumMotor(Motor):
+    """Object that represents a LEGO EV3 Medium motor.
+
+    Parameters:
+        port (str): The output port the motor is connected to, ``A``, ``B``,
+            ``C`` or ``D``.
+    """
 
     def __init__(self, port):
         """Create a new instace of a medium motor.
-
-        :param string port: The output port the motor is connected to.
         """
-        super(MediumMotor, self).__init__(port, TachoMotor.EV3_MEDIUM)
+        super(MediumMotor, self).__init__(port, Motor._EV3_MEDIUM)
 
 
 class Steer():
+    """Object that represents a two LEGO EV3 Large motors, used in a steering
+    configuration.
+
+    Parameters:
+        left_port (str): The output port the left motor is connected to,
+            ``A``, ``B``, ``C`` or ``D``.
+        right_port (str): The output port the left motor is connected to.
+    """
     def __init__(self, left_port, right_port):
         self._left_motor = LargeMotor(left_port)
         self._right_motor = LargeMotor(right_port)
 
     def on_for_degrees(self, steering, speed, degrees, brake=True):
+        """Run the motors at the target speed for the specified number of
+        degrees.
+
+        The motors will run until the new position is reached or another
+        command is given.
+
+        Parameters:
+            steering (int): The direction to steer [-100..100]. Positive values
+                will turn left and negative values will turn right.
+            speed (int): The target speed in percent [-100..100].
+            degrees (int): The number of degrees to turn the motors.
+            brake (bool): ``True`` cases the motor to hold it's position when
+                          when it is reached. ``False`` will let the motor
+                          coast to a stop.
+        """
         if steering > 100 or steering < -100:
             raise ValueError('steering is out of range')
         if speed < 0:
@@ -243,10 +251,7 @@ class Steer():
             right_speed = speed * steering / 100
             right_degrees = degrees * steering / 100
 
-        if brake:
-            stop_action = StopAction.HOLD
-        else:
-            stop_action = StopAction.COAST
+        stop_action = brake and 'hold' or 'coast'
 
         self._left_motor._set_speed_sp(left_speed)
         self._left_motor._set_position_sp(left_degrees)
@@ -276,14 +281,53 @@ class Steer():
                 break
 
     def on_for_rotations(self, steering, speed, rotations, brake=True):
+        """Run the motors at the target speed for the specified number of
+        rotations.
+
+        The motors will run until the new position is reached or another
+        command is given.
+
+        Parameters:
+            steering (int): The direction to steer [-100..100]. Positive values
+                will turn left and negative values will turn right.
+            speed (int): The target speed in percent [-100..100].
+            rotations (int): The number of rotations to turn the motors.
+            brake (bool): ``True`` cases the motor to hold it's position when
+                          when it is reached. ``False`` will let the motor
+                          coast to a stop.
+        """
         self.on_for_degrees(steering, speed, rotations * 360, brake)
 
 
 class Tank():
+    """Object that represents a two LEGO EV3 Large motors, used in a tank
+    drive configuration.
+
+    Parameters:
+        left_port (str): The output port the left motor is connected to,
+            ``A``, ``B``, ``C`` or ``D``.
+        right_port (str): The output port the left motor is connected to.
+    """
     def __init__(self, left_port, right_port):
         self._steer = Steer(left_port, right_port)
 
     def on_for_degrees(self, left_speed, right_speed, degrees, brake=True):
+        """Run the motors at the target speeds for the specified number of
+        degrees.
+
+        The motors will run until the new position is reached or another
+        command is given.
+
+        Parameters:
+            left_speed (int): The target speed for the left motor in percent
+                [-100..100].
+            right_speed (int): The target speed for the right motor in percent
+                [-100..100].
+            degrees (int): The number of degrees to turn the motors.
+            brake (bool): ``True`` cases the motor to hold it's position when
+                          when it is reached. ``False`` will let the motor
+                          coast to a stop.
+        """
         if left_speed < -100 or left_speed > 100:
             raise ValueError('left_speed is out of range')
         if right_speed < -100 or right_speed > 100:
@@ -307,4 +351,20 @@ class Tank():
         self._steer.on_for_degrees(turn, speed, degrees, brake)
 
     def on_for_rotations(self, left_speed, right_speed, rotations, brake=True):
+        """Run the motors at the target speeds for the specified number of
+        rotations.
+
+        The motors will run until the new position is reached or another
+        command is given.
+
+        Parameters:
+            left_speed (int): The target speed for the left motor in percent
+                [-100..100].
+            right_speed (int): The target speed for the right motor in percent
+                [-100..100].
+            rotations (int): The number of rotations to turn the motors.
+            brake (bool): ``True`` cases the motor to hold it's position when
+                          when it is reached. ``False`` will let the motor
+                          coast to a stop.
+        """
         self.on_for_degrees(left_speed, right_speed, rotations * 360, brake)
