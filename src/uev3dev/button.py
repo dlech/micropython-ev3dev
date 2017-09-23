@@ -5,13 +5,13 @@ import _thread
 
 from errno import EINTR
 from fcntl import ioctl
-from micropython import const
 
+from micropython import const
 from uctypes import addressof
+from uctypes import INT32
 from uctypes import sizeof
 from uctypes import struct
 from uctypes import UINT16
-from uctypes import INT32
 from uctypes import UINT64
 
 UP = const(103)
