@@ -1,8 +1,5 @@
 """Internal module for interacting with sysfs"""
 
-# try:
-#     import uos
-# except:
 import os as uos
 # FIXME: need to enable uos in micropython
 

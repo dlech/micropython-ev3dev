@@ -1,6 +1,8 @@
 """Sensors"""
 
-from uev3dev import sysfs
+from uev3dev._sysfs import find_node
+from uev3dev._sysfs import Attribute
+from uev3dev._sysfs import IntAttribute
 from uev3dev import util
 
 
@@ -24,30 +26,30 @@ class Sensor():
         # Handle shorthand port names
         if len(port) == 1:
             port = 'ev3-ports:in' + port
-        node = sysfs.find_node('lego-sensor', port, driver)
+        node = find_node('lego-sensor', port, driver)
         if not node:
             raise SensorNotFoundError(self.__class__.__name__, port)
 
         try:
-            self._command = sysfs.Attribute(node, 'command', 'w')
-            self._commands = sysfs.Attribute(node, 'commands', 'r').read().split(' ')
+            self._command = Attribute(node, 'command', 'w')
+            self._commands = Attribute(node, 'commands', 'r').read().split(' ')
         except OSError:
             # some sensors do no support commands
             pass
 
-        self._decimals = sysfs.IntAttribute(node, 'decimals', 'r')
-        self._mode = sysfs.Attribute(node, 'mode', 'r+')
-        self._modes = sysfs.Attribute(node, 'modes', 'r').read().split(' ')
-        self._num_values = sysfs.IntAttribute(node, 'num_values', 'r')
-        self._units = sysfs.Attribute(node, 'units', 'r')
-        self._value = (sysfs.IntAttribute(node, 'value0', 'r'),
-                       sysfs.IntAttribute(node, 'value1', 'r'),
-                       sysfs.IntAttribute(node, 'value2', 'r'),
-                       sysfs.IntAttribute(node, 'value3', 'r'),
-                       sysfs.IntAttribute(node, 'value4', 'r'),
-                       sysfs.IntAttribute(node, 'value5', 'r'),
-                       sysfs.IntAttribute(node, 'value6', 'r'),
-                       sysfs.IntAttribute(node, 'value7', 'r'))
+        self._decimals = IntAttribute(node, 'decimals', 'r')
+        self._mode = Attribute(node, 'mode', 'r+')
+        self._modes = Attribute(node, 'modes', 'r').read().split(' ')
+        self._num_values = IntAttribute(node, 'num_values', 'r')
+        self._units = Attribute(node, 'units', 'r')
+        self._value = (IntAttribute(node, 'value0', 'r'),
+                       IntAttribute(node, 'value1', 'r'),
+                       IntAttribute(node, 'value2', 'r'),
+                       IntAttribute(node, 'value3', 'r'),
+                       IntAttribute(node, 'value4', 'r'),
+                       IntAttribute(node, 'value5', 'r'),
+                       IntAttribute(node, 'value6', 'r'),
+                       IntAttribute(node, 'value7', 'r'))
         self._cached_decimals = None
         self._cached_num_values = None
         self._cached_units = None

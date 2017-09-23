@@ -5,7 +5,7 @@ try:
 except:
     import errno as uerrno
 
-from uev3dev import sysfs
+from uev3dev._sysfs import IntAttribute
 from uev3dev import util
 
 
@@ -13,9 +13,9 @@ def _led(name, color):
     try:
         path = '/sys/class/leds/{0}:{1}:brick-status'.format(name, color)
         led = {}
-        led['trigger'] = sysfs.IntAttribute(path, 'trigger', 'r+')
-        led['brightness'] = sysfs.IntAttribute(path, 'brightness', 'r+')
-        led['max'] = sysfs.IntAttribute(path, 'max_brightness', 'r').read()
+        led['trigger'] = IntAttribute(path, 'trigger', 'r+')
+        led['brightness'] = IntAttribute(path, 'brightness', 'r+')
+        led['max'] = IntAttribute(path, 'max_brightness', 'r').read()
         return led
     except OSError as e:
         if e.args[0] == uerrno.ENOENT:

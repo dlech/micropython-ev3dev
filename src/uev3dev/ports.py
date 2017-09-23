@@ -1,6 +1,7 @@
 
 
-import uev3dev.sysfs as sysfs
+from uev3dev._sysfs import find_node
+from uev3dev._sysfs import Attribute
 
 
 class PortNotFoundError(Exception):
@@ -20,13 +21,13 @@ class Port():
         :param string port: The name of the port.
         :param string driver: The name of the kernel driver.
         """
-        node = sysfs.find_node('lego-port', port, driver)
+        node = find_node('lego-port', port, driver)
         if not node:
             raise PortNotFoundError(self.__class__.__name__, port)
-        self._mode = sysfs.Attribute(node, 'mode', 'r+')
-        self._modes = sysfs.Attribute(node, 'modes', 'r').read().split(' ')
-        self._set_device = sysfs.Attribute(node, 'set_device', 'w')
-        self._status = sysfs.Attribute(node, 'status', 'r')
+        self._mode = Attribute(node, 'mode', 'r+')
+        self._modes = Attribute(node, 'modes', 'r').read().split(' ')
+        self._set_device = Attribute(node, 'set_device', 'w')
+        self._status = Attribute(node, 'status', 'r')
 
     @property
     def status(self):

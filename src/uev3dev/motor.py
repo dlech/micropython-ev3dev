@@ -2,7 +2,9 @@
 
 import utime
 
-import uev3dev.sysfs as sysfs
+from uev3dev._sysfs import Attribute
+from uev3dev._sysfs import IntAttribute
+from uev3dev._sysfs import find_node
 import uev3dev.util as util
 
 
@@ -27,25 +29,25 @@ class Motor():
     def __init__(self, port, driver):
         if len(port) == 1:
             port = 'ev3-ports:out' + port
-        node = sysfs.find_node('tacho-motor', port, driver)
+        node = find_node('tacho-motor', port, driver)
         if not node:
             raise MotorNotFoundError(self.__class__.__name__, port)
-        self._command = sysfs.Attribute(node, 'command', 'w')
-        self._commands = sysfs.Attribute(node, 'commands', 'r').read().split(' ')
-        self._count_per_rot = sysfs.IntAttribute(node, 'count_per_rot', 'r').read()
-        self._driver_name = sysfs.Attribute(node, 'driver_name', 'r').read()
-        self._duty_cycle = sysfs.IntAttribute(node, 'duty_cycle', 'r')
-        self._duty_cycle_sp = sysfs.IntAttribute(node, 'duty_cycle_sp', 'r+')
-        self._max_speed = sysfs.IntAttribute(node, 'max_speed', 'r').read()
-        self._position = sysfs.IntAttribute(node, 'position', 'r')
-        self._position_sp = sysfs.IntAttribute(node, 'position_sp', 'r+')
-        self._ramp_up_sp = sysfs.IntAttribute(node, 'ramp_up_sp', 'r+')
-        self._ramp_down_sp = sysfs.IntAttribute(node, 'ramp_down_sp', 'r+')
-        self._speed_sp = sysfs.IntAttribute(node, 'speed_sp', 'r+')
-        self._state = sysfs.Attribute(node, 'state', 'r')
-        self._stop_action = sysfs.Attribute(node, 'stop_action', 'r+')
-        self._stop_actions = sysfs.Attribute(node, 'stop_actions', 'r').read().split(' ')
-        self._time_sp = sysfs.IntAttribute(node, 'time_sp', 'r+')
+        self._command = Attribute(node, 'command', 'w')
+        self._commands = Attribute(node, 'commands', 'r').read().split(' ')
+        self._count_per_rot = IntAttribute(node, 'count_per_rot', 'r').read()
+        self._driver_name = Attribute(node, 'driver_name', 'r').read()
+        self._duty_cycle = IntAttribute(node, 'duty_cycle', 'r')
+        self._duty_cycle_sp = IntAttribute(node, 'duty_cycle_sp', 'r+')
+        self._max_speed = IntAttribute(node, 'max_speed', 'r').read()
+        self._position = IntAttribute(node, 'position', 'r')
+        self._position_sp = IntAttribute(node, 'position_sp', 'r+')
+        self._ramp_up_sp = IntAttribute(node, 'ramp_up_sp', 'r+')
+        self._ramp_down_sp = IntAttribute(node, 'ramp_down_sp', 'r+')
+        self._speed_sp = IntAttribute(node, 'speed_sp', 'r+')
+        self._state = Attribute(node, 'state', 'r')
+        self._stop_action = Attribute(node, 'stop_action', 'r+')
+        self._stop_actions = Attribute(node, 'stop_actions', 'r').read().split(' ')
+        self._time_sp = IntAttribute(node, 'time_sp', 'r+')
         self.port = port
         self.RPM = 100 * self._max_speed / self._count_per_rot / 60
         self.DPS = self.RPM / 6
