@@ -8,9 +8,15 @@ Welcome to micropython-ev3dev's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API Reference:
 
-   src/uev3dev.rst
+   src/uev3dev
+
+.. toctree::
+   :maxdepth: 2
+   :caption: EV3-G Transition Guide:
+
+   ev3g/index
 
 
 Indices and tables
