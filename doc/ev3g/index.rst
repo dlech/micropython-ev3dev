@@ -12,6 +12,7 @@ using the **micropython-ev3dev** library.
     :maxdepth: 2
 
     project
+    wires
 
 .. tip:: Keep in mind that this guide is not meant to be an example of how you
     should write programs in general. It is just a way to do a direct
