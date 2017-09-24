@@ -92,8 +92,12 @@ The ``.py`` file for each My Block should follow this template::
     # Import standard (micro)python modules if needed
     import utime
 
-    # Import brick interface and global variables
-    from project import brick
+    # Import brick interfaces and global variables
+    from project import buttons
+    from project import motor
+    from project import sensor
+    from project import sound
+    from project import status_light
     from project import variables
 
     # Import any other My Blocks used in this My Block
@@ -132,11 +136,11 @@ The Brick
 =========
 
 The programmable brick and all of its parts are inherent in the EV3-G software.
-There is nothing like this built into **µev3dev**, so we create another
-dictionary in ``project.py`` to represent the brick. The motors and sensors
+There is nothing like this built into **µev3dev**, so we create additional
+variables in ``project.py`` to represent the brick. The motors and sensors
 should be configured to look like the **Port View** in EV3-G plus any any motor
-combinations used by steering or tank blocks. The buttons, light and sound will
-always be the same. It looks like this::
+combinations used by steering or tank blocks. The buttons, status light and
+sound will always be the same. It looks like this::
 
     from uev3dev.button import Buttons
     from uev3dev.led import StatusLight
@@ -146,21 +150,21 @@ always be the same. It looks like this::
     from uev3dev.sensor import EV3ColorSensor
     from uev3dev.sound import Sound
 
-    brick = {
-        'motor': {
-            'A': LargeMotor('A'),
-            'B': LargeMotor('B'),
-            'C': MediumMotor('C'),
-            'D': None,
-            'A+B': Tank('A', 'B'),
-        },
-        'sensor': {
-            '1': None,
-            '2': None,
-            '3': None,
-            '4': EV3ColorSensor('4'),
-        },
-        'buttons': Buttons(),
-        'light': StatusLight(),
-        'sound': Sound(),
+    motor = {
+        'A': LargeMotor('A'),
+        'B': LargeMotor('B'),
+        'C': MediumMotor('C'),
+        'D': None,
+        'A+B': Tank('A', 'B'),
     }
+
+    sensor = {
+        '1': None,
+        '2': None,
+        '3': None,
+        '4': EV3ColorSensor('4'),
+    }
+
+    buttons = Buttons()
+    status_light StatusLight()
+    sound = Sound()

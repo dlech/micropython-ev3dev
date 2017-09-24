@@ -1,5 +1,5 @@
 
-from project import brick
+from project import motor
 
 # My Blocks
 from lower_pen import lower_pen
@@ -11,27 +11,27 @@ def print_registration_line():
     side of the page.
     """
     lower_pen()
-    brick['motor']['A'].on_for_degrees(20, 75)
-    brick['motor']['B'].on_for_degrees(-20, 50)
-    brick['motor']['A'].on_for_degrees(-20, 75)
-    brick['motor']['B'].on_for_degrees(20, 50)
-    brick['motor']['A'].on_for_degrees(20, 75)
-    brick['motor']['B'].on_for_degrees(-20, 50)
-    brick['motor']['A'].on_for_degrees(-20, 75)
-    brick['motor']['B'].on_for_degrees(20, 50)
+    motor['A'].on_for_degrees(20, 75)
+    motor['B'].on_for_degrees(-20, 50)
+    motor['A'].on_for_degrees(-20, 75)
+    motor['B'].on_for_degrees(20, 50)
+    motor['A'].on_for_degrees(20, 75)
+    motor['B'].on_for_degrees(-20, 50)
+    motor['A'].on_for_degrees(-20, 75)
+    motor['B'].on_for_degrees(20, 50)
     lift_pen()
-    brick['motor']['A'].on_for_degrees(50, 1050)
+    motor['A'].on_for_degrees(50, 1050)
 
     lower_pen()
-    brick['motor']['A'].on_for_degrees(-20, 75)
-    brick['motor']['B'].on_for_degrees(-20, 50)
-    brick['motor']['A'].on_for_degrees(20, 75)
-    brick['motor']['B'].on_for_degrees(20, 50)
-    brick['motor']['A'].on_for_degrees(-20, 75)
-    brick['motor']['B'].on_for_degrees(-20, 50)
-    brick['motor']['A'].on_for_degrees(20, 75)
-    brick['motor']['B'].on_for_degrees(20, 50)
+    motor['A'].on_for_degrees(-20, 75)
+    motor['B'].on_for_degrees(-20, 50)
+    motor['A'].on_for_degrees(20, 75)
+    motor['B'].on_for_degrees(20, 50)
+    motor['A'].on_for_degrees(-20, 75)
+    motor['B'].on_for_degrees(-20, 50)
+    motor['A'].on_for_degrees(20, 75)
+    motor['B'].on_for_degrees(20, 50)
     lift_pen()
-    brick['motor']['A'].on_for_degrees(50, -1050)
-    brick['motor']['A'].on_for_degrees(20, 10)
-    brick['motor']['B'].on_for_degrees(-20, 70)
+    motor['A'].on_for_degrees(50, -1050)
+    motor['A'].on_for_degrees(20, 10)
+    motor['B'].on_for_degrees(-20, 70)

@@ -7,23 +7,27 @@ from uev3dev.motor import MediumMotor
 from uev3dev.motor import Tank
 from uev3dev.sensors import EV3ColorSensor
 
-brick = {
-    'motor': {
-        'A': LargeMotor('A'),
-        'B': LargeMotor('B'),
-        'C': MediumMotor('C'),
-        'D': None,
-        'A+B': Tank('A', 'B'),
-    },
-    'sensor': {
-        '1': None,
-        '2': None,
-        '3': None,
-        '4': EV3ColorSensor('4'),
-    },
-    'buttons': Buttons(),
-    'light': StatusLight(),
+
+# Brick hardware configuration
+
+motor = {
+    'A': LargeMotor('A'),
+    'B': LargeMotor('B'),
+    'C': MediumMotor('C'),
+    'D': None,
+    'A+B': Tank('A', 'B'),
 }
+
+sensor = {
+    '1': None,
+    '2': None,
+    '3': None,
+    '4': EV3ColorSensor('4'),
+}
+
+buttons = Buttons()
+status_light = StatusLight()
+
 
 # comes from the Variables tab in Project Properties
 variables = {

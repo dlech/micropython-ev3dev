@@ -1,5 +1,5 @@
 
-from project import brick
+from project import motor
 from project import variables
 
 # My Blocks
@@ -122,7 +122,7 @@ def print_letter(letter):
     # Move the pen to accommodate the letter spacing, and update all the
     # variables tracking the position of the pen on the line.
     letter_spacing = variables['LetterSpacing']
-    brick['motor']['A'].on_for_degrees(20, letter_spacing)
+    motor['A'].on_for_degrees(20, letter_spacing)
     line_position = (variables['LastLetterWidth'] + variables['LinePosition'] +
                      letter_spacing)
     variables['LinePosition'] = line_position

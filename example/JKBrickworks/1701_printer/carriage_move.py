@@ -1,5 +1,5 @@
 
-from project import brick
+from project import motor
 from project import variables
 
 
@@ -9,7 +9,7 @@ def carriage_move(position):
     It calculates how much to move the pen based on its current position
     (LinePosition) and the requested new position.
     """
-    brick['motor']['A'].on_for_degrees(50, position - variables['LinePosition'])
+    motor['A'].on_for_degrees(50, position - variables['LinePosition'])
     variables['LinePosition'] = position
 
     # If we are moving the pen to the left side of the page, 'overshoot'
@@ -18,5 +18,5 @@ def carriage_move(position):
     if position == 1:
         pass
     else:
-        brick['motor']['A'].on_for_degrees(-20, 10)
-        brick['motor']['A'].on_for_degrees(20, 10)
+        motor['A'].on_for_degrees(-20, 10)
+        motor['A'].on_for_degrees(20, 10)

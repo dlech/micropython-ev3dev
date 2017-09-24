@@ -1,9 +1,9 @@
 
-from project import brick
+from project import motor
 
 
 def lift_pen():
     """Lifts the pen off the page so that it can be moved without depositing
     ink.
     """
-    brick['motor']['C'].on_for_degrees(25, 180)
+    motor['C'].on_for_degrees(25, 180)

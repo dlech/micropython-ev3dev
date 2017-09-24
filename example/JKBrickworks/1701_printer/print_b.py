@@ -1,5 +1,5 @@
 
-from project import brick
+from project import motor
 from project import variables
 
 # My Blocks
@@ -12,14 +12,14 @@ def print_b(size):
     seg3 = variables['Seg3']
     seg4 = variables['Seg4']
     lower_pen()
-    brick['motor']['B'].on_for_degrees(-20, seg4)
-    brick['motor']['A'].on_for_degrees(20, seg3)
-    brick['motor']['A+B'].on_for_degrees(20, 20, seg1)
-    brick['motor']['A+B'].on_for_degrees(-20, 20, seg1)
-    brick['motor']['A'].on_for_degrees(-20, seg3)
-    brick['motor']['A'].on_for_degrees(20, seg3)
-    brick['motor']['A+B'].on_for_degrees(20, 20, seg1)
-    brick['motor']['A+B'].on_for_degrees(-20, 20, seg1)
-    brick['motor']['A'].on_for_degrees(-20, seg3)
+    motor['B'].on_for_degrees(-20, seg4)
+    motor['A'].on_for_degrees(20, seg3)
+    motor['A+B'].on_for_degrees(20, 20, seg1)
+    motor['A+B'].on_for_degrees(-20, 20, seg1)
+    motor['A'].on_for_degrees(-20, seg3)
+    motor['A'].on_for_degrees(20, seg3)
+    motor['A+B'].on_for_degrees(20, 20, seg1)
+    motor['A+B'].on_for_degrees(-20, 20, seg1)
+    motor['A'].on_for_degrees(-20, seg3)
     lift_pen()
-    brick['motor']['A'].on_for_degrees(20, seg4)
+    motor['A'].on_for_degrees(20, seg4)

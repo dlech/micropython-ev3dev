@@ -5,7 +5,7 @@ test various parts of the program.
 
 from uev3dev.util import fork
 
-from project import brick
+from project import motor
 from project import variables
 
 # My Blocks
@@ -29,7 +29,7 @@ def print_test_page():
     # line.
     initialize()
     feed_in()
-    brick['motor']['C'].on_for_rotations(50, -2.5)
+    motor['C'].on_for_rotations(50, -2.5)
     carriage_move(0)
     print_registration_line()
 
@@ -76,7 +76,7 @@ def print_test_page():
     carriage_move(525)
 
     def thread1():
-        brick['motor']['C'].on_for_rotations(50, 2.5)
+        motor['C'].on_for_rotations(50, 2.5)
 
     def thread2():
         feed_out()

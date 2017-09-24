@@ -8,7 +8,8 @@ from uev3dev.button import DOWN
 from uev3dev.button import UP
 from uev3dev.util import fork
 
-from project import brick
+from project import buttons
+from project import motor
 from project import variables
 
 # My Blocks
@@ -18,7 +19,7 @@ from carriage_move import carriage_move
 
 def calibrate():
     initialize()
-    brick['motor']['C'].on_for_rotations(25, -2.5)
+    motor['C'].on_for_rotations(25, -2.5)
 
     def thread1():
         while True:
@@ -29,19 +30,19 @@ def calibrate():
             line_width = variables['LineWidth']
             carriage_move(line_width)
             variables['LinePosition'] = line_width
-            if brick['buttons'].test((CENTER,), State.BUMPED):
+            if buttons.test((CENTER,), State.BUMPED):
                 break
         carriage_move(525)
-        brick['motor']['C'].on_for_rotations(25, 3)
+        motor['C'].on_for_rotations(25, 3)
 
     def thread2():
         while True:
-            brick['buttons'].wait((UP, CENTER, DOWN), State.PRESSED)
-            button = brick['buttons'].read()
+            buttons.wait((UP, CENTER, DOWN), State.PRESSED)
+            button = buttons.read()
             if button == UP:
-                brick['motor']['C'].on_for_degrees(25, 5)
+                motor['C'].on_for_degrees(25, 5)
             elif button == DOWN:
-                brick['motor']['C'].on_for_degrees(-25, 5)
+                motor['C'].on_for_degrees(-25, 5)
             elif button == CENTER:
                 # This is not in the EV3-G program, but is needed in order for
                 # the program to exit, otherwise this thread keeps running.

@@ -1,7 +1,7 @@
 
 from uev3dev.button import CENTER
 
-from project import brick
+from project import buttons
 from project import variables
 
 # My Blocks
@@ -23,7 +23,7 @@ def print_queue():
             variables['QPosition'] = variables['QPosition'] + 1
         else:
             variables['EStop'] = True
-        if brick['buttons'].read() == CENTER:
+        if buttons.read() == CENTER:
             variables['EStop'] = True
         if variables['EStop']:
             break

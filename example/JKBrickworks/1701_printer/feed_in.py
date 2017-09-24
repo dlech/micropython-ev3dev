@@ -1,6 +1,6 @@
 
-# project
-from project import brick
+from project import motor
+from project import sensor
 
 
 def feed_in():
@@ -9,7 +9,7 @@ def feed_in():
     """
 
     while True:
-        brick['motor']['B'].on(-50)
-        if brick['sensor']['4'].read_reflected() > 4:
+        motor['B'].on(-50)
+        if sensor['4'].read_reflected() > 4:
             break
-    brick['motor']['B'].off()
+    motor['B'].off()

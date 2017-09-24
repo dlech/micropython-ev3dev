@@ -1,6 +1,6 @@
 
 # project
-from project import brick
+from project import status_light
 from project import variables
 
 # My Blocks
@@ -14,7 +14,7 @@ def initialize():
 
     # You can customize the 'LetterSpacing' and 'text_size' variables,
     # but should probably leave the others as they are.
-    brick['light'].off()
+    status_light.off()
     variables['LinePosition'] = 525
     variables['LineWidth'] = 1050
     variables['LetterSpacing'] = 20
