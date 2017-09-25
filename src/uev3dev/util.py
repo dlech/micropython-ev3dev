@@ -1,6 +1,7 @@
 """Utility module"""
 
 import sys
+import time
 import _thread
 
 
@@ -51,3 +52,22 @@ def fork(*functions):
     for l in locks:
         l.acquire()
         l.release()
+
+
+class Timer():
+    """Object that represents a timer"""
+    def __init__(self):
+        self._start_time = 0
+        self.reset()
+
+    def reset(self):
+        self._start_time = time.perf_counter()
+
+    def elapsed_time(self):
+        now = time.perf_counter()
+        return now - self._start_time
+
+    def wait(self, compare, value):
+        while not compare(self.elapsed_time(), 0.8):
+            pass
+

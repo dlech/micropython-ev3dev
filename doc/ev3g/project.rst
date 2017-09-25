@@ -123,13 +123,13 @@ file::
         'Text1': '',
         'Numeric1': 0,
         'Logic1': False,
-        'NumericArray1': [],
-        'LogicArray': [],
+        'NumericArray1': (),
+        'LogicArray': (),
     }
 
 .. tip:: Initialize text variables with an empty string (``''``), numeric
     variables with ``0``, logic variables with ``False`` and array variables
-    (both numeric and logic) with an empty list (``[]``).
+    (both numeric and logic) with an empty tuple (``()``).
 
 
 The Brick
@@ -149,6 +149,7 @@ sound will always be the same. It looks like this::
     from uev3dev.motor import Tank
     from uev3dev.sensor import EV3ColorSensor
     from uev3dev.sound import Sound
+    from uev3dev.util import Timer
 
     motor = {
         'A': LargeMotor('A'),
@@ -168,3 +169,14 @@ sound will always be the same. It looks like this::
     buttons = Buttons()
     status_light StatusLight()
     sound = Sound()
+
+    timer = {
+        1: Timer(),
+        2: Timer(),
+        3: Timer(),
+        4: Timer(),
+        5: Timer(),
+        6: Timer(),
+        7: Timer(),
+        8: Timer(),
+    }
