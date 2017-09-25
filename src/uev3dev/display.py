@@ -2,8 +2,6 @@
 
 from fcntl import ioctl
 
-# FIXME: These micropython modules don't have python equivalents, so building
-# docs fails
 import framebuf
 import uctypes
 
@@ -74,8 +72,11 @@ fb_var_screeninfo = {
 }
 
 
-class Display():
-    """Object that represents a display"""
+class _Screen():
+    """Object that represents a screen"""
+
+    BLACK = 0
+    WHITE = 1
 
     def __init__(self):
         self._fbdev = open('/dev/fb0', 'w+')
@@ -92,12 +93,12 @@ class Display():
 
     @property
     def width(self):
-        """Gets the width of the display in pixels"""
+        """Gets the width of the screen in pixels"""
         return self._var_info.xres_virtual
 
     @property
     def height(self):
-        """Gets the height of the display in pixels"""
+        """Gets the height of the screen in pixels"""
         return self._var_info.yres_virtual
 
     @property
@@ -106,7 +107,7 @@ class Display():
         return self._var_info.bits_per_pixel
 
     def update(self, data):
-        """Updates the display with the framebuffer data.
+        """Updates the screen with the framebuffer data.
 
         Must be data returned by self.framebuffer().
         """
@@ -114,7 +115,7 @@ class Display():
         self._fbdev.write(data)
 
     def framebuffer(self):
-        """Creates a new framebuffer for the display
+        """Creates a new framebuffer for the screen
 
         returns a framebuf.FrameBuffer object used for drawing and a bytearray
         object to be passed to self.update()
@@ -125,3 +126,20 @@ class Display():
         fbuf = framebuf.FrameBuffer(data, self.width, self.height, format,
                                     self._fix_info.line_length // self.bpp * 8)
         return fbuf, data
+
+
+class Display():
+    def __init__(self):
+        self._screen = _Screen()
+        self._fb, self._data = self._screen.framebuffer()
+
+    def text_pixels(self, text, clear, x, y, color, font):
+        if clear:
+            self._fb.fill(_Screen.WHITE)
+        if color:
+            color = _Screen.WHITE
+        else:
+            color = _Screen.BLACK
+        # TODO: micropython framebuf only has one font
+        self._fb.text(str(text), x, y, color)
+        self._screen.update(self._data)
