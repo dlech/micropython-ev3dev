@@ -71,3 +71,24 @@ class Timer():
         while not compare(self.elapsed_time(), 0.8):
             pass
 
+
+def write_at_index(array, index, value):
+    """Creates a copy of an array with the value at ``index`` set to
+    ``value``. The array is extended if needed.
+
+    Parameters:
+        array (tuple): The input array
+        index (int): The index in the array to write to
+        value (value): The value to write
+
+    Returns:
+        A new tuple containing the modified array
+    """
+    l = list(array)
+    extend = index - len(l) + 1
+    if extend > 0:
+        # FIXME: this could be a logic array, in which case we should use
+        # False instead of 0. But, using zero is not likely to cause problems.
+        l += [0] * extend
+    l[index] = value
+    return tuple(l)
