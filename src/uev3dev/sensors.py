@@ -212,3 +212,31 @@ class EV3UltrasonicSensor(Sensor):
         if self._current_mode != self._modes[2]:
             self.set_mode(self._modes[2])
         return bool(self.value(0))
+
+
+class EV3TouchSensor(Sensor):
+    """Object that represents the LEGO EV3 Touch Sensor"""
+
+    RELEASED = 0
+    PRESSED = 1
+    BUMPED = 2
+
+    def __init__(self, port):
+        """Create a new instance of an ultrasonic sensor.
+
+        :param string port: The input port the sensor is connected to.
+        """
+        super(EV3TouchSensor, self).__init__(port, 'lego-ev3-touch')
+        self._current_mode = self._modes.index(self._mode.read())
+
+    def wait(self, state):
+        if state == self.RELEASED:
+            while self._value[0].read():
+                pass
+        elif state == self.PRESSED:
+            while not self._value[0].read():
+                pass
+        elif state == self.BUMPED:
+            raise RuntimeError('Not implemented')
+        else:
+            raise ValueError('Invalid state')
