@@ -1,62 +1,27 @@
 #!/usr/bin/env micropython
-"""Sample program using EXPLOR3R"""
+"""Test program for testing whatever"""
 
-from uev3dev import *
+import time
 
-# init display
-display = Display()
-fbuf, fbuf_data = display.framebuffer()
+from uev3dev.sound import PlayType
+from uev3dev.sound import Sound
+from uev3dev.util import debug_print
 
-# init motors
-left_motor = LargeMotor('B')
-right_motor = LargeMotor('C')
+sound = Sound()
 
+debug_print('enter')
+sound.play_note('C4', 0.1, 20, PlayType.WAIT)
+sound.play_note('D4', 0.1, 20, PlayType.WAIT)
+sound.play_note('E4', 0.1, 20, PlayType.WAIT)
+sound.play_note('F4', 0.1, 20, PlayType.WAIT)
+sound.play_note('G4', 0.1, 20, PlayType.WAIT)
+sound.play_note('A5', 0.1, 20, PlayType.WAIT)
+sound.play_note('B5', 0.1, 20, PlayType.WAIT)
+sound.play_note('C5', 0.1, 20, PlayType.WAIT)
+debug_print('exit')
 
-# fun with I2C
+debug_print('enter')
+sound.play_file('/usr/share/sounds/alsa/Front_Right.wav', 100, PlayType.REPEAT)
+debug_print('exit')
 
-in4 = EV3InputPort('4')
-in4.mode = 'other-i2c'
-bus4 = SMBus('/dev/i2c-in4')
-bus4.set_address(0x01)
-
-firmware = bytes(bus4.read_i2c_block_data(0x00, 8)).decode().strip()
-vendor = bytes(bus4.read_i2c_block_data(0x08, 8)).decode().strip()
-product = bytes(bus4.read_i2c_block_data(0x10, 8)).decode().strip()
-debug_print(firmware, vendor, product)
-
-if vendor != 'mndsnsrs' or product != 'NXTcam5':
-    raise ValueError('Wrong sensor')
-
-
-# functions
-
-def scale(x1, y1, x2, y2):
-    """Convert points from NXTCam to screen rectangle"""
-    x1 = x1 * display.width // 240
-    y1 = y1 * display.height // 160
-    x2 = x2 * display.width // 240
-    y2 = y2 * display.height // 160
-    return x1, y1, x2 - x1, y2 - y1
-
-
-# Main loop
-
-bus4.write_byte_data(0x41, 0x46)  # set face tracking mode
-
-while True:
-    n = bus4.read_byte_data(0x42)
-    fbuf.fill(1)
-    for i in range(0, n):
-        data = bus4.read_i2c_block_data(0x43 + i * 5, 5)
-        color = data[0]
-        x1 = data[1]
-        y1 = data[2]
-        x2 = data[3]
-        y2 = data[4]
-        x, y, w, h = scale(x1, y1, x2, y2)
-        fbuf.rect(x, y, w, h, 0)
-    display.update(fbuf_data)
-
-    speed = n and ((x1 + x2 // 2) - 128) // 4
-    left_motor.on_unregulated(-speed)
-    right_motor.on_unregulated(speed)
+time.sleep(5)

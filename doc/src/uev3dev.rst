@@ -12,4 +12,5 @@ uev3dev package
 
    uev3dev/button
    uev3dev/motor
+   uev3dev/sound
    uev3dev/util

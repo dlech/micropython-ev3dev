@@ -80,8 +80,18 @@ Images
 Sounds
 ======
 
-.. todo:: Sounds are not yet implemented in **µev3dev**.
+Sounds are stored in .WAV files in the project directory. If your project has
+sounds, you need to set up a dictionary to map names to file paths in
+``project.py``. Like this::
 
+    from os import path
+
+    # gets the directory of this file
+    _project_dir = path.dirname(__file__)
+
+    sounds = {
+        'General alert': path.join(_project_dir, 'general_alert.wav')
+    }
 
 
 My Blocks
