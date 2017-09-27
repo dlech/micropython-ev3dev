@@ -173,5 +173,6 @@ class Timeout():
             os.check_error(e)
 
     def wait(self):
+        """Waits until the timer has finished or is canceled"""
         with self._wait_lock:
             pass
