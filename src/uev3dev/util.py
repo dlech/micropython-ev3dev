@@ -5,6 +5,8 @@ import os
 import sys
 import time
 
+from errno import EINTR
+
 from ffilib import libc
 from uselect import poll
 from uselect import POLLIN
@@ -147,7 +149,14 @@ class Timeout():
         try:
             data = bytearray(8)
             while True:
-                events = self._poll.poll(int(self._interval * 1000))
+                try:
+                    events = self._poll.poll(int(self._interval * 1000))
+                except OSError as err:
+                    # TODO: implement PEP 475 in micropython so we don't have
+                    # to check for EINTR
+                    if err.args[0] == EINTR:
+                        continue
+                    raise
                 for fd, ev in events:
                     e = os.read_(fd, data, 8)
                     os.check_error(e)
