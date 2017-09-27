@@ -12,6 +12,7 @@ from uev3dev.motor import Tank
 from uev3dev.sensors import EV3ColorSensor
 from uev3dev.sensors import EV3TouchSensor
 from uev3dev.sound import Sound
+from uev3dev.sound import SoundFile
 from uev3dev.util import Timer
 
 
@@ -55,7 +56,7 @@ timer = {
 # Stuff from Project Properties tab
 
 sounds = {
-    'General alert': path.join(_project_dir, 'general_alert.wav')
+    'General alert': SoundFile(path.join(_project_dir, 'general_alert.wav'))
 }
 
 variables = {

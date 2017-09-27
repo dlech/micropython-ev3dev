@@ -1,4 +1,5 @@
 
+from errno import EPIPE
 from struct import calcsize
 from struct import unpack
 
@@ -12,9 +13,8 @@ _strerror = _alsa.func('s', 'snd_strerror', 'i')
 
 
 def _check_error(err):
-    if not err:
-        return
-    raise AlsaError(_strerror(err))
+    if err < 0:
+        raise AlsaError(_strerror(err))
 
 
 class AlsaError(Exception):
@@ -59,10 +59,8 @@ class Mixer():
             max = bytearray(calcsize('l'))
 
             # get PCM volume control
-            err = Mixer._selem_id_set_index(self._id, 0)
-            _check_error(err)
-            err = Mixer._selem_id_set_name(self._id, 'PCM')
-            _check_error(err)
+            Mixer._selem_id_set_index(self._id, 0)
+            Mixer._selem_id_set_name(self._id, 'PCM')
             self._pcm_elem = Mixer._find_selem(self._mixer, self._id)
             if not self._pcm_elem:
                 raise AlsaError('Could not find "PCM" mixer element')
@@ -73,16 +71,12 @@ class Mixer():
             self._pcm_max = unpack('l', max)[0]
 
             # get Beep volume control
-            err = Mixer._selem_id_set_index(self._id, 0)
-            _check_error(err)
-            err = Mixer._selem_id_set_name(self._id, 'Beep')
-            _check_error(err)
+            Mixer._selem_id_set_index(self._id, 0)
+            Mixer._selem_id_set_name(self._id, 'Beep')
             self._beep_elem = Mixer._find_selem(self._mixer, self._id)
             if not self._beep_elem:
                 raise AlsaError('Could not find "Beep" mixer element')
-            Mixer._selem_get_playback_volume_range(self._beep_elem,
-                                                   addressof(min),
-                                                   addressof(max))
+            Mixer._selem_get_playback_volume_range(self._beep_elem, min, max)
             self._beep_min = unpack('l', min)[0]
             self._beep_max = unpack('l', max)[0]
         except:
@@ -105,3 +99,79 @@ class Mixer():
         # scale the volume, assuming self._beep_min is 0
         volume = volume * self._beep_max // 100
         Mixer._selem_set_playback_volume_all(self._beep_elem, volume)
+
+
+class PCM():
+    _open = _alsa.func('i', 'snd_pcm_open', 'pPIi')
+    _writei = _alsa.func('l', 'snd_pcm_writei', 'ppL')
+    _prepare = _alsa.func('l', 'snd_pcm_prepare', 'p')
+    _drop = _alsa.func('l', 'snd_pcm_drop', 'p')
+    _drain = _alsa.func('l', 'snd_pcm_drain', 'p')
+    _close = _alsa.func('l', 'snd_pcm_close', 'p')
+    _hw_params = _alsa.func('i', 'snd_pcm_hw_params', 'pp')
+    _hw_params_sizeof = _alsa.func('p', 'snd_pcm_hw_params_sizeof', '')
+    _hw_params_any = _alsa.func('i', 'snd_pcm_hw_params_any', 'pp')
+    _hw_params_set_access = _alsa.func('i', 'snd_pcm_hw_params_set_access', 'ppI')
+    _hw_params_set_format = _alsa.func('i', 'snd_pcm_hw_params_set_format', 'ppI')
+    _hw_params_set_channels = _alsa.func('i', 'snd_pcm_hw_params_set_channels', 'ppI')
+    _hw_params_set_rate = _alsa.func('i', 'snd_pcm_hw_params_set_rate', 'ppIi')
+    _hw_params_get_period_size = \
+        _alsa.func('i', 'snd_pcm_hw_params_get_period_size', 'ppp')
+
+    _STREAM_PLAYBACK = 0
+    _ACCESS_RW_INTERLEAVED = 3
+    _FORMAT_S16_LE = 2
+
+    def __init__(self):
+        self._pcm = bytearray(calcsize('P'))
+        err = PCM._open(self._pcm, 'default', PCM._STREAM_PLAYBACK, 0)
+        _check_error(err)
+        self._pcm = unpack('P', self._pcm)[0]
+        try:
+            self._hp = bytearray(PCM._hw_params_sizeof())
+            err = PCM._hw_params_any(self._pcm, self._hp)
+            _check_error(err)
+        except:
+            PCM._close(self._pcm)
+            raise
+
+    def close(self):
+        if self._pcm:
+            PCM._close(self._pcm)
+            self._pcm = None
+
+    def play(self, sound_file, cancel_token=None):
+        err = PCM._hw_params_set_access(self._pcm, self._hp,
+                                        PCM._ACCESS_RW_INTERLEAVED)
+        _check_error(err)
+        err = PCM._hw_params_set_format(self._pcm, self._hp,
+                                        PCM._FORMAT_S16_LE)
+        _check_error(err)
+        err = PCM._hw_params_set_channels(self._pcm, self._hp,
+                                          sound_file._channels)
+        _check_error(err)
+        err = PCM._hw_params_set_rate(self._pcm, self._hp,
+                                      sound_file._samplerate, 0)
+        _check_error(err)
+
+        err = PCM._hw_params(self._pcm, self._hp)
+        _check_error(err)
+        frames = bytearray(calcsize('L'))
+        direction = bytearray(calcsize('i'))
+        err = PCM._hw_params_get_period_size(self._hp, frames, direction)
+        _check_error(err)
+        frames = unpack('L', frames)[0]
+
+        for buf, count in sound_file._read(frames):
+            if cancel_token and cancel_token.canceled:
+                PCM._drop(self._pcm)
+                _check_error(err)
+                return
+            err = PCM._writei(self._pcm, buf, count)
+            if err == -EPIPE:
+                PCM._prepare(self._pcm)
+            else:
+                _check_error(err)
+
+        err = PCM._drain(self._pcm)
+        _check_error(err)
