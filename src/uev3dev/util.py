@@ -1,8 +1,23 @@
 """Utility module"""
 
+import _thread
+import os
 import sys
 import time
-import _thread
+
+from ffilib import libc
+from select import epoll
+from select import EPOLLIN
+from uctypes import addressof
+from uctypes import sizeof
+from uctypes import struct
+from uctypes import UINT32
+from uctypes import UINT64
+
+_libc = libc()
+
+_eventfd = _libc.func('i', 'eventfd', 'ii')
+_EFD_CLOEXEC = 0o2000000
 
 
 def debug_print(*args, sep=' ', end='\n'):
@@ -82,22 +97,6 @@ def write_at_index(array, index, value):
         l += [0] * extend
     l[index] = value
     return tuple(l)
-
-import os
-import sys
-from select import epoll
-from select import EPOLLIN
-from ffilib import libc
-from uctypes import addressof
-from uctypes import sizeof
-from uctypes import struct
-from uctypes import UINT32
-from uctypes import UINT64
-
-_libc = libc()
-
-_eventfd = _libc.func('i', 'eventfd', 'ii')
-_EFD_CLOEXEC = 0o2000000
 
 
 class Timeout():
