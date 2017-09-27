@@ -1,11 +1,11 @@
 
 import _thread
-import ffilib
 import os
 
 from multiprocessing import Process
 from time import sleep
 
+import ffilib
 from uctypes import addressof
 from uctypes import INT32
 from uctypes import sizeof
