@@ -6,8 +6,8 @@ import sys
 import time
 
 from ffilib import libc
-from select import epoll
-from select import EPOLLIN
+from uselect import poll
+from uselect import POLLIN
 from uctypes import addressof
 from uctypes import sizeof
 from uctypes import struct
@@ -104,6 +104,9 @@ class Timeout():
 
     This is a pseudo replacement for ``threading.Timer``.
 
+    .. warning:: Calling :py:meth:`start`, :py:meth:`cancel` or :py:meth:`wait`
+        from the callback will cause a deadlock.
+
     Parameters:
         interval (float): The delay in seconds
         func (function): The callback function
@@ -117,8 +120,8 @@ class Timeout():
     def __init__(self, interval, func, repeat=False):
         self._fd = _eventfd(0, _EFD_CLOEXEC)
         os.check_error(self._fd)
-        self._epoll = epoll(1)
-        self._epoll.register(self._fd, EPOLLIN)
+        self._poll = poll()
+        self._poll.register(self._fd, POLLIN)
         self._interval = interval
         self._func = func
         self._repeat = repeat
@@ -134,24 +137,29 @@ class Timeout():
         Since micropython doesn't allow ``__del__`` on user-defined classes, we
         need to be sure to always manually call ``close()``.
         """
-        self._epoll.unregister(self._fd)
-        self._epoll.close()
+        self._poll.unregister(self._timerfd)
+        self._poll.unregister(self._fd)
+        self._poll.close()
+        os.close(self._timerfd)
         os.close(self._fd)
 
     def _run(self):
-        with self._wait_lock:
+        try:
             data = bytearray(8)
             while True:
-                events = self._epoll.poll(int(self._interval * 1000))
+                events = self._poll.poll(int(self._interval * 1000))
                 for fd, ev in events:
                     e = os.read_(fd, data, 8)
                     os.check_error(e)
                 with self._cancel_lock:
                     if self._canceled:
                         break
+                    self._canceled = True
                     self._func()
                     if not self._repeat:
                         break
+        finally:
+            self._wait_lock.release()
 
     def start(self):
         """Start running the timer"""
@@ -159,6 +167,7 @@ class Timeout():
             if self._wait_lock.locked():
                 raise RuntimeError('already started')
             self._canceled = False
+            self._wait_lock.acquire()
             _thread.start_new_thread(self._run, ())
 
     def cancel(self):
@@ -168,7 +177,7 @@ class Timeout():
                 return
             self._canceled = True
 
-            e = os.write(self._fd, self._ONE)
+            e = os.write(self._fd, Timeout._ONE)
             os.check_error(e)
 
     def wait(self):

@@ -1,5 +1,5 @@
 
-
+import _thread
 import ffilib
 import os
 
@@ -13,7 +13,7 @@ from uctypes import struct
 from uctypes import UINT16
 from uctypes import UINT64
 
-from uev3dev.util import debug_print
+from uev3dev.util import Timeout
 
 # TODO: signal.SIGKILL is not defined in micropython-lib
 _SIGKILL = 9
@@ -98,6 +98,8 @@ class Sound():
         self._beep_dev = open(_BEEP_DEV, 'b+')
         self._tone_data = bytearray(sizeof(_input_event))
         self._tone_event = struct(addressof(self._tone_data), _input_event)
+        self._timeout = Timeout(0, None)
+        self._lock = _thread.allocate_lock()
 
     def _play_tone(self, frequency):
         self._tone_event.type = _EV_SND
@@ -115,23 +117,19 @@ class Sound():
             play_type (PlayType): Controls how many times the sound is played
                 and when the function returns
         """
-        self.stop()
-        self._pid = os.fork()
-        if self._pid:
-            if play_type == PlayType.WAIT:
-                os.waitpid(self._pid, 0)
-        else:
-            # terminate this process when parent dies
-            _prctl(_PR_SET_PDEATHSIG, _SIGTERM)
-            # FIXME: should stop playback on SIGTERM
-            # for now, running with brickrun can take care of this
-            while True:
-                self._play_tone(frequency)
-                sleep(duration)
-                self._play_tone(0)
-                if play_type != PlayType.REPEAT:
-                    break
-            os._exit(0)
+        with self._lock:
+            self._stop()
+            self._timeout._interval = duration
+            self._timeout._repeat = play_type == PlayType.REPEAT
+            if self._timeout._repeat:
+                self._timeout._func = lambda: self._play_tone(frequency)
+            else:
+                self._timeout._func = lambda: self._play_tone(0)
+            self._play_tone(frequency)
+            self._timeout.start()
+
+        if play_type == PlayType.WAIT:
+            self._timeout.wait()
 
     def play_note(self, note, duration, volume, play_type):
         """Play a musical note
@@ -155,22 +153,23 @@ class Sound():
             play_type (PlayType): Controls how many times the sound is played
                 and when the function returns
         """
-        self.stop()
-        self._pid = os.fork()
-        if self._pid:
-            if play_type == PlayType.WAIT:
-                os.waitpid(self._pid, 0)
-        else:
-            # terminate this process when parent dies
-            _prctl(_PR_SET_PDEATHSIG, _SIGTERM)
-            while True:
-                err = os.system('aplay --quiet {}'.format(file))
-                if err or play_type != PlayType.REPEAT:
-                    break
-            os._exit(0)
+        with self._lock:
+            self._stop()
+            self._pid = os.fork()
+            if self._pid:
+                if play_type == PlayType.WAIT:
+                    os.waitpid(self._pid, 0)
+            else:
+                # terminate this process when parent dies
+                _prctl(_PR_SET_PDEATHSIG, _SIGTERM)
+                while True:
+                    err = os.system('aplay --quiet {}'.format(file))
+                    if err or play_type != PlayType.REPEAT:
+                        break
+                os._exit(0)
 
-    def stop(self):
-        """Stop any sound that is playing"""
+    def _stop(self):
+        self._timeout.cancel()
         pid = self._pid
         if pid:
             self._pid = 0
@@ -180,3 +179,8 @@ class Sound():
                 # we tried
                 pass
         self._play_tone(0)
+
+    def stop(self):
+        """Stop any sound that is playing"""
+        with self._lock:
+            self._stop()
