@@ -1,4 +1,7 @@
 
+def open(name, maxver=10, extra=()):
+    return _Mod()
+
 
 def libc():
     return _Mod()

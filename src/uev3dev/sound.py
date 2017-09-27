@@ -13,6 +13,7 @@ from uctypes import struct
 from uctypes import UINT16
 from uctypes import UINT64
 
+from uev3dev._alsa import Mixer
 from uev3dev.util import Timeout
 
 # TODO: signal.SIGKILL is not defined in micropython-lib
@@ -96,6 +97,7 @@ class Sound():
     def __init__(self):
         self._pid = 0
         self._beep_dev = open(_BEEP_DEV, 'b+')
+        self._mixer = Mixer()
         self._tone_data = bytearray(sizeof(_input_event))
         self._tone_event = struct(addressof(self._tone_data), _input_event)
         self._timeout = Timeout(0, None)
@@ -125,6 +127,7 @@ class Sound():
                 self._timeout._func = lambda: self._play_tone(frequency)
             else:
                 self._timeout._func = lambda: self._play_tone(0)
+            self._mixer.set_beep_volume(volume)
             self._play_tone(frequency)
             self._timeout.start()
 
@@ -155,6 +158,7 @@ class Sound():
         """
         with self._lock:
             self._stop()
+            self._mixer.set_pcm_volume(volume)
             self._pid = os.fork()
             if self._pid:
                 if play_type == PlayType.WAIT:
