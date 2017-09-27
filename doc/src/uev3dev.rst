@@ -11,6 +11,7 @@ uev3dev package
    :caption: Modules:
 
    uev3dev/button
+   uev3dev/led
    uev3dev/motor
    uev3dev/sound
    uev3dev/util

@@ -5,16 +5,6 @@ import time
 import _thread
 
 
-def _enum(**enums):
-    """Create a new type that is used as an enum
-
-    :param enums: keyword arguments giving the enum members and values
-    """
-    # micropython doesn't seem to have the enum(enum34) package
-    # https://stackoverflow.com/a/1695250/1976323
-    return type('Enum', (), enums)
-
-
 def debug_print(*args, sep=' ', end='\n'):
     """Print on stderr for debugging
 
@@ -92,3 +82,96 @@ def write_at_index(array, index, value):
         l += [0] * extend
     l[index] = value
     return tuple(l)
+
+import os
+import sys
+from select import epoll
+from select import EPOLLIN
+from ffilib import libc
+from uctypes import addressof
+from uctypes import sizeof
+from uctypes import struct
+from uctypes import UINT32
+from uctypes import UINT64
+
+_libc = libc()
+
+_eventfd = _libc.func('i', 'eventfd', 'ii')
+_EFD_CLOEXEC = 0o2000000
+
+
+class Timeout():
+    """Object for scheduling a callback.
+
+    This is a pseudo replacement for ``threading.Timer``.
+
+    Parameters:
+        interval (float): The delay in seconds
+        func (function): The callback function
+        repeat (bool): When ``True``, the callback will be be called at
+            ``interval`` until :py:meth:`cancel` is called. When ``False``,
+            the callback will only be called once.
+    """
+
+    _ONE = int(1).to_bytes(8, sys.byteorder)
+
+    def __init__(self, interval, func, repeat=False):
+        self._fd = _eventfd(0, _EFD_CLOEXEC)
+        os.check_error(self._fd)
+        self._epoll = epoll(1)
+        self._epoll.register(self._fd, EPOLLIN)
+        self._interval = interval
+        self._func = func
+        self._repeat = repeat
+        # _cancel_lock protects access to _canceled
+        self._cancel_lock = _thread.allocate_lock()
+        self._canceled = False
+        # _wait_lock is used for synchronization
+        self._wait_lock = _thread.allocate_lock()
+
+    def close(self):
+        """Release operating system resources.
+
+        Since micropython doesn't allow ``__del__`` on user-defined classes, we
+        need to be sure to always manually call ``close()``.
+        """
+        self._epoll.unregister(self._fd)
+        self._epoll.close()
+        os.close(self._fd)
+
+    def _run(self):
+        with self._wait_lock:
+            data = bytearray(8)
+            while True:
+                events = self._epoll.poll(int(self._interval * 1000))
+                for fd, ev in events:
+                    e = os.read_(fd, data, 8)
+                    os.check_error(e)
+                with self._cancel_lock:
+                    if self._canceled:
+                        break
+                    self._func()
+                    if not self._repeat:
+                        break
+
+    def start(self):
+        """Start running the timer"""
+        with self._cancel_lock:
+            if self._wait_lock.locked():
+                raise RuntimeError('already started')
+            self._canceled = False
+            _thread.start_new_thread(self._run, ())
+
+    def cancel(self):
+        """Cancel the timer"""
+        with self._cancel_lock:
+            if self._canceled:
+                return
+            self._canceled = True
+
+            e = os.write(self._fd, self._ONE)
+            os.check_error(e)
+
+    def wait(self):
+        with self._wait_lock:
+            pass
