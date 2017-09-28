@@ -27,12 +27,6 @@ _SEEK_SET = 0
 _BEEP_DEV = '/dev/input/by-path/platform-sound-event'
 
 
-# stuff from linux/prctl.h
-
-_libc = ffilib.libc()
-_prctl = _libc.func('i', 'prctl', 'il')
-_PR_SET_PDEATHSIG = 1
-
 # stuff from linux/input.h and linux/input-event-codes.h
 
 _EV_SND = 0x12
