@@ -95,18 +95,7 @@ class Motor():
         self._set_stop_action(brake and 'hold' or 'coast')
         self._set_position_sp(degrees)
         self._command.write('run-to-rel-pos')
-        while True:
-            state = self._state.read()
-            if 'running' not in state or 'holding' in state:
-                break
-            while True:
-                try:
-                    self._poll.poll()
-                    break
-                except OSError as err:
-                    if err.args[0] == EINTR:
-                        continue
-                    raise
+        self._wait()
 
     def on_for_rotations(self, speed, rotations, brake=True):
         """Run the motor at the target speed for the specified number of
@@ -140,18 +129,7 @@ class Motor():
         self._set_time_sp(int(time * 1000))
         self._set_stop_action(brake and 'hold' or 'coast')
         self._command.write('run-timed')
-        while True:
-            state = self._state.read()
-            if 'running' not in state or 'holding' in state:
-                break
-            while True:
-                try:
-                    self._poll.poll()
-                    break
-                except OSError as err:
-                    if err.args[0] == EINTR:
-                        continue
-                    raise
+        self._wait()
 
     def on_unregulated(self, duty_cycle):
         """Run the motor using the specified duty cycle.
@@ -175,6 +153,21 @@ class Motor():
         """
         self._set_stop_action(brake and 'hold' or 'coast')
         self._command.write('stop')
+
+    def _wait(self):
+        """Wait for the run command to complete."""
+        while True:
+            state = self._state.read()
+            if 'running' not in state or 'holding' in state:
+                break
+            while True:
+                try:
+                    self._poll.poll()
+                    break
+                except OSError as err:
+                    if err.args[0] == EINTR:
+                        continue
+                    raise
 
     def _set_duty_cycle_sp(self, duty_cycle):
         if duty_cycle < -100 or duty_cycle > 100:
@@ -296,31 +289,8 @@ class Steer():
         else:
             self._right_motor._command.write('stop')
 
-        while True:
-            state = self._left_motor._state.read()
-            if 'running' not in state or 'holding' in state:
-                break
-            while True:
-                try:
-                    self._left_motor._poll.poll()
-                    break
-                except OSError as err:
-                    if err.args[0] == EINTR:
-                        continue
-                    raise
-
-        while True:
-            state = self._right_motor._state.read()
-            if 'running' not in state or 'holding' in state:
-                break
-            while True:
-                try:
-                    self._right_motor._poll.poll()
-                    break
-                except OSError as err:
-                    if err.args[0] == EINTR:
-                        continue
-                    raise
+        self._left_motor._wait()
+        self._right_motor._wait()
 
     def on_for_rotations(self, steering, speed, rotations, brake=True):
         """Run the motors at the target speed for the specified number of
