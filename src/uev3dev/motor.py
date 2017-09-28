@@ -2,7 +2,6 @@
 
 from errno import EINTR
 
-import utime
 from uselect import poll
 from uselect import POLLIN
 
@@ -141,7 +140,18 @@ class Motor():
         self._set_time_sp(int(time * 1000))
         self._set_stop_action(brake and 'hold' or 'coast')
         self._command.write('run-timed')
-        utime.sleep(time)
+        while True:
+            state = self._state.read()
+            if 'running' not in state or 'holding' in state:
+                break
+            while True:
+                try:
+                    self._poll.poll()
+                    break
+                except OSError as err:
+                    if err.args[0] == EINTR:
+                        continue
+                    raise
 
     def on_unregulated(self, duty_cycle):
         """Run the motor using the specified duty cycle.
