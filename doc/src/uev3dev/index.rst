@@ -10,8 +10,8 @@ uev3dev package
    :maxdepth: 1
    :caption: Modules:
 
-   uev3dev/button
-   uev3dev/led
-   uev3dev/motor
-   uev3dev/sound
-   uev3dev/util
+   button
+   led
+   motor
+   sound
+   util

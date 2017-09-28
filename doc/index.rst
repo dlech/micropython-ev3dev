@@ -10,7 +10,7 @@ Welcome to micropython-ev3dev's documentation!
    :maxdepth: 2
    :caption: API Reference:
 
-   src/uev3dev
+   src/uev3dev/index
 
 .. toctree::
    :maxdepth: 2
