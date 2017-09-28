@@ -25,10 +25,6 @@ class Motor():
     motor instance rather than using this class directly.
     """
 
-    _EV3_LARGE = 'lego-ev3-l-motor'
-
-    _EV3_MEDIUM = 'lego-ev3-m-motor'
-
     def __init__(self, port, driver):
         if len(port) == 1:
             port = 'ev3-ports:out' + port
@@ -208,7 +204,7 @@ class LargeMotor(Motor):
     def __init__(self, port):
         """Create a new instace of a large motor.
         """
-        super(LargeMotor, self).__init__(port, Motor._EV3_LARGE)
+        super(LargeMotor, self).__init__(port, 'lego-ev3-l-motor')
 
 
 class MediumMotor(Motor):
@@ -222,7 +218,7 @@ class MediumMotor(Motor):
     def __init__(self, port):
         """Create a new instace of a medium motor.
         """
-        super(MediumMotor, self).__init__(port, Motor._EV3_MEDIUM)
+        super(MediumMotor, self).__init__(port, 'lego-ev3-m-motor')
 
 
 class Steer():
