@@ -1,19 +1,26 @@
 """Internal module for interacting with sysfs"""
 
-import os
+from os import listdir
+from os import path
 
 
 class Attribute():
-    """A sysfs attribute"""
-    def __init__(self, path, attr, mode):
-        full_path = path + '/' + attr
+    """A sysfs attribute
+
+    Parameters:
+        syspath (str): The path to the sysfs device node
+        attr (str): The name of the sysfs attribute
+        mode (str): The file mode to pass to ``open()``
+    """
+    def __init__(self, syspath, attr, mode):
+        full_path = path.join(syspath,  attr)
         self.attr = open(full_path, mode)
 
     def read(self):
         """Reads the attribute value
 
-        :return: the value read
-        :rtype: str
+        Returns:
+            The value read from the attribute
         """
         self.attr.seek(0)
         return self.attr.read().strip()
@@ -21,36 +28,50 @@ class Attribute():
     def write(self, value):
         """Writes the attribute value
 
-        :param str value: The value to write
+        Parameters:
+            value (str): The value to write
         """
         self.attr.write(value)
 
 
 class IntAttribute(Attribute):
-    """A sysfs attribute that has an integer value"""
-    def __init__(self, path, attr, mode):
-        super(IntAttribute, self).__init__(path, attr, mode)
+    """A sysfs attribute that has an integer value
+
+    Parameters:
+        syspath (str): The path to the sysfs device node
+        attr (str): The name of the sysfs attribute
+        mode (str): The file mode to pass to ``open()``
+    """
+    def __init__(self, syspath, attr, mode):
+        super(IntAttribute, self).__init__(syspath, attr, mode)
 
     def read(self):
         """Reads the attribute value
 
-        :return: the value read
-        :rtype: int
+        Returns:
+            The value read from the attribute
         """
         return int(super(IntAttribute, self).read())
 
     def write(self, value):
         """Writes the attribute value
 
-        :param int value: The value to write
+        Parameters:
+            value (int): The value to write
         """
         super(IntAttribute, self).write(str(value))
 
 
 class ListAttribute(Attribute):
-    """A sysfs attribute that has a space-separated list of values"""
-    def __init__(self, path, attr, mode):
-        super(ListAttribute, self).__init__(path, attr, mode)
+    """A sysfs attribute that has a space-separated list of values
+
+    Parameters:
+        syspath (str): The path to the sysfs device node
+        attr (str): The name of the sysfs attribute
+        mode (str): The file mode to pass to ``open()``
+    """
+    def __init__(self, syspath, attr, mode):
+        super(ListAttribute, self).__init__(syspath, attr, mode)
 
     def read(self):
         """Reads the attribute value
@@ -62,6 +83,8 @@ class ListAttribute(Attribute):
 
     def write(self, value):
         """Raises ``RuntimeError``
+
+        Writing to :py:class:`ListAttribute` is not allowed.
         """
         raise RuntimeError('Writing to ListAttribute is not supported')
 
@@ -69,14 +92,17 @@ class ListAttribute(Attribute):
 def find_node(subsystem, address, driver):
     """Find a sysfs device node.
 
-    :param str subsystem: The name of the subsystem.
-    :param str address: A value to match to the ``address`` attribute.
-    :param str driver: A value to match to the ``driver_name`` attribute.
-    :return str: The path to the device or None if a match was not found.
+    Parameters:
+        subsystem (str): The name of the subsystem.
+        address (str): A value to match to the ``address`` attribute.
+        driver (str): A value to match to the ``driver_name`` attribute.
+
+    Returns:
+        The path to the device or ``None`` if a match was not found.
     """
-    path = '/sys/class/' + subsystem
-    for node in os.listdir(path):
-        node = path + '/' + node
+    syspath = path.join('/sys/class', subsystem)
+    for node in listdir(syspath):
+        node = path.join(syspath, node)
         addr = Attribute(node, 'address', 'r').read()
         if address != addr:
             continue
