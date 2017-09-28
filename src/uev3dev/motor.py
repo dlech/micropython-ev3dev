@@ -1,6 +1,10 @@
 """Motors"""
 
+from errno import EINTR
+
 import utime
+from uselect import poll
+from uselect import POLLIN
 
 from uev3dev._sysfs import Attribute
 from uev3dev._sysfs import IntAttribute
@@ -48,7 +52,9 @@ class Motor():
         self._stop_action = Attribute(node, 'stop_action', 'r+')
         self._stop_actions = ListAttribute(node, 'stop_actions', 'r').read()
         self._time_sp = IntAttribute(node, 'time_sp', 'r+')
-        self.port = port
+        self._poll = poll()
+        self._poll.register(self._state.attr.fileno(), POLLIN)
+        self._port = port
         self.RPM = 100 * self._max_speed / self._count_per_rot / 60
         self.DPS = self.RPM / 6
         self._command.write('reset')
@@ -94,6 +100,14 @@ class Motor():
             state = self._state.read()
             if 'running' not in state or 'holding' in state:
                 break
+            while True:
+                try:
+                    self._poll.poll()
+                    break
+                except OSError as err:
+                    if err.args[0] == EINTR:
+                        continue
+                    raise
 
     def on_for_rotations(self, speed, rotations, brake=True):
         """Run the motor at the target speed for the specified number of
@@ -276,11 +290,27 @@ class Steer():
             state = self._left_motor._state.read()
             if 'running' not in state or 'holding' in state:
                 break
+            while True:
+                try:
+                    self._left_motor._poll.poll()
+                    break
+                except OSError as err:
+                    if err.args[0] == EINTR:
+                        continue
+                    raise
 
         while True:
             state = self._right_motor._state.read()
             if 'running' not in state or 'holding' in state:
                 break
+            while True:
+                try:
+                    self._right_motor._poll.poll()
+                    break
+                except OSError as err:
+                    if err.args[0] == EINTR:
+                        continue
+                    raise
 
     def on_for_rotations(self, steering, speed, rotations, brake=True):
         """Run the motors at the target speed for the specified number of
