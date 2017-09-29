@@ -3,35 +3,20 @@
 
 import time
 
-from uev3dev.led import Color
-from uev3dev.led import StatusLight
-from uev3dev.sound import PlayType
-from uev3dev.sound import Sound
-from uev3dev.sound import SoundFile
+from uev3dev.messaging import BluetoothRemote
+from uev3dev.messaging import BluetoothServer
 from uev3dev.util import debug_print
 
-# light = StatusLight()
-# light.on(Color.ORANGE, True)
-
-sound = Sound()
-
-debug_print('enter')
-sound.play_note('C4', 0.1, 20, PlayType.WAIT)
-sound.play_note('D4', 0.1, 20, PlayType.WAIT)
-sound.play_note('E4', 0.1, 20, PlayType.WAIT)
-sound.play_note('F4', 0.1, 20, PlayType.WAIT)
-sound.play_note('G4', 0.1, 20, PlayType.WAIT)
-sound.play_note('A5', 0.1, 20, PlayType.WAIT)
-sound.play_note('B5', 0.1, 20, PlayType.WAIT)
-sound.play_note('C5', 0.1, 20, PlayType.WAIT)
-debug_print('exit')
-
-debug_print('enter')
-f = SoundFile('/usr/share/sounds/alsa/Front_Right.wav')
-sound.play_file(f, 100, PlayType.REPEAT)
-debug_print('exit')
-
+bt = BluetoothRemote('00:16:53:4c:5b:1f')
+w = bt._sock.write(b'\x0C\x00\x00\x00\x80\x00\x00\xA4\x00\x01\x14\xA6\x00\x01')
+debug_print(w)
 time.sleep(5)
-sound.stop()
-debug_print('stopped')
-time.sleep(5)
+w = bt._sock.write(b'\x09\x00\x01\x00\x80\x00\x00\xA3\x00\x01\x00')
+debug_print(w)
+
+bt.close()
+
+bt = BluetoothServer()
+bt.start()
+bt._accept()
+bt.close()
