@@ -190,7 +190,7 @@ class EV3UltrasonicSensor(Sensor):
             self.set_mode(self._modes[0])
         return self.value(0)
 
-    def read_in(self):
+    def read_inch(self):
         """Reads the current distance measured by the sensor in inches.
 
         Also has the effect of setting the LED to red.
