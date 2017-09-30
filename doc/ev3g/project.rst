@@ -45,8 +45,16 @@ The ``.py`` file for each program should follow this template::
     # Import standard (micro)python modules if needed
     import utime
 
-    # Import brick interface and global variables
-    from project import brick
+    # Import brick interfaces and global variables
+    from project import button
+    from project import display
+    from project import images
+    from project import motor
+    from project import sensor
+    from project import sound
+    from project import sounds
+    from project import status_light
+    from project import timer
     from project import variables
 
     # Import any My Blocks used in this program
