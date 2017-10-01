@@ -11,6 +11,7 @@ uev3dev package
    :caption: Modules:
 
    button
+   display
    led
    motor
    sound

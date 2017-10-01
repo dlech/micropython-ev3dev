@@ -9,4 +9,8 @@ def libc():
 
 class _Mod():
     def func(self, ret_type, name, arg_types):
-        pass
+        return _universal_func
+
+
+def _universal_func(*args, **kwargs):
+    pass

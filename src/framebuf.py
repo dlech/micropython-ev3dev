@@ -2,7 +2,7 @@
 python.
 """
 
-MONO_VLSB, MONO_HLSB, MONO_HMSB, RGB565, GS4_HMSB = range(6)
+MONO_VLSB, MONO_HLSB, MONO_HMSB, RGB565, GS4_HMSB = range(5)
 
 
 class FrameBuffer():

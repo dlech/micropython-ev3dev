@@ -81,8 +81,24 @@ The ``.py`` file for each program should follow this template::
 Images
 ======
 
-.. todo:: Images are not yet implemented in **µev3dev**.
+Images are stored in .PNG files (or just about any other file format, including
+.RGF). Images can be stored in the project directory or you can use the images
+from ``/usr/share/images/ev3dev/``. An image map is configured in ``project.py``
+as a dictionary. Like this::
 
+    from os import path
+
+    from uev3dev.display import Display
+    from uev3dev.sound import ImageFile
+
+    display = Display()
+
+    # gets the directory of this file
+    PROJECT_DIR = path.dirname(__file__)
+
+    images = {
+        'Neutral': ImageFile(path.join(PROJECT_DIR, 'neutral.png'), display)
+    }
 
 
 Sounds
@@ -97,10 +113,10 @@ Like this::
     from uev3dev.sound import SoundFile
 
     # gets the directory of this file
-    _project_dir = path.dirname(__file__)
+    PROJECT_DIR = path.dirname(__file__)
 
     sounds = {
-        'General alert': SoundFile(path.join(_project_dir, 'general_alert.wav'))
+        'General alert': SoundFile(path.join(PROJECT_DIR, 'general_alert.wav'))
     }
 
 
